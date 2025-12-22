@@ -7,7 +7,19 @@ export default function Attendance() {
 
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Get company id of logged-in owner
+      const { data: companies } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('owner_id', user.id)
+        .single()
+
+      if (!companies) return
+
+      const { data } = await supabase
         .from('attendance')
         .select(`
           id,
@@ -16,17 +28,10 @@ export default function Attendance() {
           latitude,
           longitude,
           photo_path,
-          employees (
-            name,
-            employee_code
-          )
+          employees ( name, employee_code )
         `)
+        .eq('company_id', companies.id)
         .order('punch_time', { ascending: false })
-
-      if (error) {
-        alert(error.message)
-        return
-      }
 
       setRows(data || [])
     }
