@@ -1,6 +1,6 @@
 'use client'
-import { supabase } from '@/lib/supabaseClient'
 import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function Attendance() {
   const [rows, setRows] = useState<any[]>([])
@@ -39,49 +39,56 @@ export default function Attendance() {
     load()
   }, [])
 
+  const openMap = (lat:number, lng:number) => {
+    window.open(`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}`, '_blank')
+  }
+
+  const openPhoto = (path:string) => {
+    const url = supabase.storage
+      .from('attendance-photos')
+      .getPublicUrl(path).data.publicUrl
+    window.open(url, '_blank')
+  }
+
   return (
-    <table border={1} cellPadding={8}>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Code</th>
-          <th>Type</th>
-          <th>Time</th>
-          <th>Photo</th>
-          <th>Map</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.id}>
-            <td>{r.employees?.name}</td>
-            <td>{r.employees?.employee_code}</td>
-            <td>{r.punch_type}</td>
-            <td>{new Date(r.punch_time).toLocaleString('en-IN', {
-                  timeZone: 'Asia/Kolkata'
-                })}
-            </td>
+    <>
+      <h1 className="text-2xl font-bold mb-6">Attendance</h1>
 
-            <td>
-              <a
-                href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/attendance-photos/${r.photo_path}`}
-                target="_blank"
-              >
-                View Photo
-              </a>
-            </td>
-
-            <td>
-              <a
-                href={`https://www.openstreetmap.org/?mlat=${r.latitude}&mlon=${r.longitude}#map=18/${r.latitude}/${r.longitude}`}
-                target="_blank"
-              >
-                View Map
-              </a>
-            </td>
+      <table className="w-full bg-white rounded-xl shadow overflow-hidden">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-3">Name</th>
+            <th>Code</th>
+            <th>Type</th>
+            <th>Time</th>
+            <th>Actions</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={r.id} className="border-t">
+              <td className="p-3">{r.employees.name}</td>
+              <td>{r.employees.employee_code}</td>
+              <td>{r.punch_type}</td>
+              <td>{new Date(r.punch_time).toLocaleString()}</td>
+              <td className="space-x-2">
+                <button
+                  onClick={()=>openPhoto(r.photo_path)}
+                  className="px-3 py-1 bg-blue-600 text-white rounded"
+                >
+                  Photo
+                </button>
+                <button
+                  onClick={()=>openMap(r.latitude, r.longitude)}
+                  className="px-3 py-1 bg-green-600 text-white rounded"
+                >
+                  Map
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
   )
 }
