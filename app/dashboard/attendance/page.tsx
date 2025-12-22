@@ -52,7 +52,10 @@ export default function Attendance() {
             <td>{r.employees?.name}</td>
             <td>{r.employees?.employee_code}</td>
             <td>{r.punch_type}</td>
-            <td>{new Date(r.punch_time).toLocaleString()}</td>
+            <td>{new Date(r.punch_time).toLocaleString('en-IN', {
+                  timeZone: 'Asia/Kolkata'
+                })}
+            </td>
 
             <td>
               <a
