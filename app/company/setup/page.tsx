@@ -16,6 +16,11 @@ export default function CompanySetup() {
       alert('Not authenticated')
       return
     }
+    if (!name.trim()) {
+      alert('Company name is required')
+      return
+    }
+
 
     const user = data.user   // ✅ now user is guaranteed
 
@@ -24,7 +29,8 @@ export default function CompanySetup() {
       .insert({
         owner_id: user.id,
         name,
-        address
+        address,
+        owner_email: user.email // ✅ FIX
       })
 
     if (insertError) {
