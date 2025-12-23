@@ -6,23 +6,31 @@ import { useState } from 'react'
 
 export default function CompanySetup() {
   const router = useRouter()
+
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const submit = async () => {
-    const { data, error } = await supabase.auth.getUser()
+    setError(null)
 
-    if (error || !data.user) {
-      alert('Not authenticated')
-      return
-    }
     if (!name.trim()) {
-      alert('Company name is required')
+      setError('Company name is required')
       return
     }
 
+    setLoading(true)
 
-    const user = data.user   // ✅ now user is guaranteed
+    const { data, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !data.user) {
+      setError('Not authenticated')
+      setLoading(false)
+      return
+    }
+
+    const user = data.user
 
     const { error: insertError } = await supabase
       .from('companies')
@@ -30,11 +38,13 @@ export default function CompanySetup() {
         owner_id: user.id,
         name,
         address,
-        owner_email: user.email // ✅ FIX
+        owner_email: user.email
       })
 
+    setLoading(false)
+
     if (insertError) {
-      alert(insertError.message)
+      setError(insertError.message)
       return
     }
 
@@ -42,10 +52,65 @@ export default function CompanySetup() {
   }
 
   return (
-    <>
-      <input placeholder="Company name" onChange={e => setName(e.target.value)} />
-      <input placeholder="Address" onChange={e => setAddress(e.target.value)} />
-      <button onClick={submit}>Create Company</button>
-    </>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border p-8">
+        {/* Header */}
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Company Setup
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Set up your company to start managing employees
+        </p>
+
+        {/* Error */}
+        {error && (
+          <div className="mt-4 rounded-lg bg-red-50 text-red-700 px-4 py-2 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <div className="mt-6 space-y-4">
+          {/* Company Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Company Name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Acme Corporation"
+              className="w-full rounded-xl border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Address */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Address (optional)
+            </label>
+            <input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Office address"
+              className="w-full rounded-xl border px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Action */}
+        <button
+          onClick={submit}
+          disabled={loading}
+          className={`mt-6 w-full rounded-xl py-3 font-medium text-white transition ${
+            loading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+        >
+          {loading ? 'Creating company...' : 'Create Company'}
+        </button>
+      </div>
+    </div>
   )
 }
