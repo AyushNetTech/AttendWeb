@@ -62,15 +62,14 @@ export default function Sidebar() {
         <button className="nav-btn" onClick={() => router.push('/dashboard/settings')}>
           Settings
         </button>
-      </nav>
 
-      {/* Footer */}
-      <button
-        onClick={signOut}
-        className="mt-4 text-red-400 hover:bg-red-500 hover:text-white px-3 py-2 rounded"
-      >
-        Sign Out
-      </button>
+        <button
+          onClick={signOut}
+          className="signout-btn mt-4 text-red-400 hover:text-white px-3 py-2 rounded"
+        >
+          Sign Out
+        </button>
+      </nav>
     </aside>
   )
 }

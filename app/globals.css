@@ -12,3 +12,18 @@
 .nav-btn:hover {
   background: #1e293b;
 }
+
+.signout-btn{
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+}
+
+.signout-btn:hover {
+  background: #ef4444;
+}
+
+
+
