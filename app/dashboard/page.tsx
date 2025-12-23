@@ -19,23 +19,48 @@ export default function Dashboard() {
   }, [])
 
   async function loadStats() {
+    // 1️⃣ Get logged-in user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // 2️⃣ Get company of this user
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
+    if (companyError || !company) return
+
+    // 3️⃣ Get employees of this company
     const { data: employees } = await supabase
       .from('employees')
       .select('id')
+      .eq('company_id', company.id)
 
+    const employeeIds = employees?.map(e => e.id) || []
+
+    // If no employees
+    if (employeeIds.length === 0) {
+      setStats({ total: 0, present: 0, absent: 0 })
+      return
+    }
+
+    // 4️⃣ Get today attendance of only this company's employees
     const today = new Date().toISOString().slice(0, 10)
 
     const { data: punches } = await supabase
       .from('attendance')
       .select('employee_id')
       .gte('punch_time', today)
+      .in('employee_id', employeeIds)
 
     const presentIds = new Set(punches?.map(p => p.employee_id))
 
     setStats({
-      total: employees?.length || 0,
+      total: employeeIds.length,
       present: presentIds.size,
-      absent: (employees?.length || 0) - presentIds.size
+      absent: employeeIds.length - presentIds.size
     })
   }
 
