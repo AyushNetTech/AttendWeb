@@ -47,10 +47,10 @@ export default function Sidebar() {
           Dashboard
         </button>
 
-        <button className="nav-btn" onClick={() => router.push('/dashboard/add-employee')}>
-          Add Employee
+        <button className="nav-btn" onClick={() => router.push('/dashboard/employees')}>
+          Employee Management
         </button>
-
+        
         <button className="nav-btn" onClick={() => router.push('/dashboard/attendance')}>
           Attendance
         </button>
