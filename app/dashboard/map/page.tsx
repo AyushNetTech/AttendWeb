@@ -6,7 +6,6 @@ import 'leaflet/dist/leaflet.css'
 import '@/lib/leafletFix'
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet'
 
-
 type MarkerData = {
   employee_name: string
   punch_type: 'IN' | 'OUT'
@@ -18,18 +17,45 @@ type MarkerData = {
 export default function EmployeeMap() {
   const [markers, setMarkers] = useState<MarkerData[]>([])
   const [loading, setLoading] = useState(true)
+  const [icons, setIcons] = useState<any>(null)
+
+  /* ✅ Create Leaflet icons ONLY on client */
+  useEffect(() => {
+    import('leaflet').then(L => {
+      const greenIcon = new L.Icon({
+        iconUrl:
+          'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+        shadowUrl:
+          'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41], // 🔴 exact ground point
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+
+      const redIcon = new L.Icon({
+        iconUrl:
+          'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+        shadowUrl:
+          'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+
+      setIcons({ greenIcon, redIcon })
+    })
+  }, [])
 
   useEffect(() => {
     loadMapData()
   }, [])
 
   async function loadMapData() {
-    setLoading(true)
-
     const { data: userData } = await supabase.auth.getUser()
     if (!userData.user) return
 
-    // 1️⃣ Get company
     const { data: company } = await supabase
       .from('companies')
       .select('id')
@@ -38,27 +64,27 @@ export default function EmployeeMap() {
 
     if (!company) return
 
-    // 2️⃣ Get latest punch per employee
-    const { data, error } = await supabase.rpc('latest_employee_punches', {
+    const { data } = await supabase.rpc('latest_employee_punches', {
       company_uuid: company.id
     })
 
-    if (!error && data) setMarkers(data)
-
+    if (data) setMarkers(data)
     setLoading(false)
   }
 
-  if (loading) {
+  if (loading || !icons) {
     return <div className="p-6">Loading map...</div>
   }
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold mb-4">Employee Attendance Map</h1>
+      <h1 className="text-2xl font-semibold mb-4">
+        Employee Attendance Map
+      </h1>
 
       <div className="h-[600px] rounded-xl overflow-hidden border">
         <MapContainer
-          center={[20.5937, 78.9629]} // India center
+          center={[20.5937, 78.9629]}
           zoom={5}
           className="h-full w-full"
         >
@@ -68,43 +94,46 @@ export default function EmployeeMap() {
           />
 
           {markers.map((m, i) => (
-            <Marker key={i} position={[m.latitude, m.longitude]}>
-                {/* 👤 Employee name always visible */}
-                <Tooltip
+            <Marker
+              key={i}
+              position={[m.latitude, m.longitude]}
+              icon={m.punch_type === 'IN' ? icons.greenIcon : icons.redIcon}
+            >
+              {/* 👤 Name slightly ABOVE marker */}
+              <Tooltip
                 permanent
                 direction="top"
-                offset={[0, -10]}
+                offset={[0, -28]} // ⭐ PERFECT placement
+                opacity={1}
                 className="employee-label"
-                >
+              >
                 {m.employee_name}
-                </Tooltip>
+              </Tooltip>
 
-                {/* ℹ️ Details on click */}
-                <Popup>
+              <Popup>
                 <div className="text-sm">
-                    <p className="font-semibold">{m.employee_name}</p>
-                    <p>
+                  <p className="font-semibold">{m.employee_name}</p>
+                  <p>
                     Status:{' '}
                     <span
-                        className={
+                      className={
                         m.punch_type === 'IN'
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }
                     >
-                        {m.punch_type}
+                      {m.punch_type}
                     </span>
-                    </p>
-                    <p>
+                  </p>
+                  <p>
                     {new Date(m.punch_time).toLocaleString('en-IN', {
-                        timeZone: 'Asia/Kolkata'
+                      timeZone: 'Asia/Kolkata'
                     })}
-                    </p>
+                  </p>
                 </div>
-                </Popup>
+              </Popup>
             </Marker>
-            ))}
-
+          ))}
         </MapContainer>
       </div>
     </div>
