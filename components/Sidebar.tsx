@@ -55,6 +55,14 @@ export default function Sidebar() {
           Attendance
         </button>
 
+        <button
+          className="nav-btn"
+          onClick={() => router.push('/dashboard/map')}
+        >
+          Attendance Map
+        </button>
+
+
         <button className="nav-btn" onClick={() => router.push('/dashboard/reports')}>
           Reports
         </button>
