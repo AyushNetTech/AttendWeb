@@ -11,12 +11,14 @@ type AttendanceRow = {
   longitude: number
   photo_path: string
   employees: {
-    name: string | null
-    employee_code: string | null
-    department: string | null
-    designation: string | null
-  } | null
+  name: string | null
+  employee_code: string | null
+  department: string | null
+  designation: string | null
+} | null
+
 }
+
 
 const PAGE_SIZE = 10
 
@@ -114,9 +116,10 @@ export default function Attendance() {
     const { data, count } = await query
       .order('punch_time', { ascending: false })
       .range(from, to)
+      .returns<AttendanceRow[]>()
 
-    setRows(data || [])
-    setTotal(count || 0)
+    setRows(data ?? [])
+    setTotal(count ?? 0)
   }
 
   const openMap = (lat: number, lng: number) => {
@@ -274,30 +277,36 @@ export default function Attendance() {
                 </td>
               </tr>
             ) : (
-              rows.map(r => (
-                <tr key={r.id} className="border-t">
-                  <td className="p-3">{r.employees?.name || '-'}</td>
-                  <td>{r.employees?.employee_code || '-'}</td>
-                  <td>{r.employees?.department || '-'}</td>
-                  <td>{r.employees?.designation || '-'}</td>
-                  <td>{r.punch_type}</td>
-                  <td>{new Date(r.punch_time).toLocaleString()}</td>
-                  <td className="space-x-2">
-                    <button
-                      onClick={() => openPhoto(r.photo_path)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded"
-                    >
-                      Photo
-                    </button>
-                    <button
-                      onClick={() => openMap(r.latitude, r.longitude)}
-                      className="px-3 py-1 bg-green-600 text-white rounded"
-                    >
-                      Map
-                    </button>
-                  </td>
-                </tr>
-              ))
+              rows.map(r => {
+                const emp = r.employees
+
+
+                return (
+                  <tr key={r.id} className="border-t">
+                    <td className="p-3">{emp?.name || '-'}</td>
+                    <td>{emp?.employee_code || '-'}</td>
+                    <td>{emp?.department || '-'}</td>
+                    <td>{emp?.designation || '-'}</td>
+                    <td>{r.punch_type}</td>
+                    <td>{new Date(r.punch_time).toLocaleString()}</td>
+                    <td className="space-x-2">
+                      <button
+                        onClick={() => openPhoto(r.photo_path)}
+                        className="px-3 py-1 bg-blue-600 text-white rounded"
+                      >
+                        Photo
+                      </button>
+                      <button
+                        onClick={() => openMap(r.latitude, r.longitude)}
+                        className="px-3 py-1 bg-green-600 text-white rounded"
+                      >
+                        Map
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
+
             )}
           </tbody>
 
