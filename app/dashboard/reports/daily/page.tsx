@@ -5,7 +5,9 @@ import { supabase } from '@/lib/supabaseClient'
 
 export default function DailyAttendance() {
   const [rows, setRows] = useState<any[]>([])
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(
+    new Date().toISOString().split('T')[0]
+  )
 
   useEffect(() => {
     load()
@@ -21,10 +23,15 @@ export default function DailyAttendance() {
       .eq('owner_id', user.id)
       .single()
 
-    const { data } = await supabase.rpc('report_daily_attendance', {
-      p_company_id: company.id,
-      p_date: date
-    })
+    if (!company) return
+
+    const { data } = await supabase.rpc(
+      'report_daily_attendance',
+      {
+        p_company_id: company.id,
+        p_date: date,
+      }
+    )
 
     setRows(data || [])
   }
@@ -37,25 +44,27 @@ export default function DailyAttendance() {
         type="date"
         value={date}
         onChange={e => setDate(e.target.value)}
-        className="border p-2 mb-4"
+        className="border p-2 rounded mb-4"
       />
 
       <table className="w-full bg-white rounded-xl">
         <thead className="bg-gray-100">
           <tr>
             <th className="p-3">Employee</th>
+            <th>Code</th>
             <th>Status</th>
-            <th>IN</th>
-            <th>OUT</th>
+            <th>In</th>
+            <th>Out</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={i} className="border-t">
               <td className="p-3">{r.employee_name}</td>
+              <td>{r.employee_code}</td>
               <td>{r.status}</td>
-              <td>{r.in_time || '-'}</td>
-              <td>{r.out_time || '-'}</td>
+              <td>{r.in_time}</td>
+              <td>{r.out_time}</td>
             </tr>
           ))}
         </tbody>

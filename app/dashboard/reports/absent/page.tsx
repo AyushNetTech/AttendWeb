@@ -5,11 +5,10 @@ import { supabase } from '@/lib/supabaseClient'
 
 export default function AbsentReport() {
   const [rows, setRows] = useState<any[]>([])
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
 
   useEffect(() => {
     load()
-  }, [date])
+  }, [])
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -21,37 +20,36 @@ export default function AbsentReport() {
       .eq('owner_id', user.id)
       .single()
 
-    const { data } = await supabase.rpc('report_missing_punch', {
-      p_company_id: company.id,
-      p_date: date
-    })
+    if (!company) return
+
+    const { data } = await supabase.rpc(
+      'report_absent_missing',
+      { p_company_id: company.id }
+    )
 
     setRows(data || [])
   }
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Absent / Missing Punch</h1>
-
-      <input
-        type="date"
-        value={date}
-        onChange={e => setDate(e.target.value)}
-        className="border p-2 mb-4"
-      />
+      <h1 className="text-xl font-bold mb-4">
+        Absent / Missing Punch
+      </h1>
 
       <table className="w-full bg-white rounded-xl">
         <thead className="bg-gray-100">
           <tr>
             <th className="p-3">Employee</th>
-            <th>Status</th>
+            <th>Date</th>
+            <th>Issue</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
             <tr key={i} className="border-t">
               <td className="p-3">{r.employee_name}</td>
-              <td>{r.status}</td>
+              <td>{r.date}</td>
+              <td>{r.issue}</td>
             </tr>
           ))}
         </tbody>
