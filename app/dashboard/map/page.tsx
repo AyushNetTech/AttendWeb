@@ -3,8 +3,31 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import 'leaflet/dist/leaflet.css'
-import '@/lib/leafletFix'
-import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet'
+import { applyLeafletFix } from '@/lib/leafletFix'
+
+import dynamic from 'next/dynamic'
+
+// ✅ Dynamically import react-leaflet (SSR OFF)
+const MapContainer = dynamic(
+  () => import('react-leaflet').then(m => m.MapContainer),
+  { ssr: false }
+)
+const TileLayer = dynamic(
+  () => import('react-leaflet').then(m => m.TileLayer),
+  { ssr: false }
+)
+const Marker = dynamic(
+  () => import('react-leaflet').then(m => m.Marker),
+  { ssr: false }
+)
+const Popup = dynamic(
+  () => import('react-leaflet').then(m => m.Popup),
+  { ssr: false }
+)
+const Tooltip = dynamic(
+  () => import('react-leaflet').then(m => m.Tooltip),
+  { ssr: false }
+)
 
 type MarkerData = {
   employee_name: string
@@ -17,18 +40,29 @@ type MarkerData = {
 export default function EmployeeMap() {
   const [markers, setMarkers] = useState<MarkerData[]>([])
   const [loading, setLoading] = useState(true)
-  const [icons, setIcons] = useState<any>(null)
+  const [icons, setIcons] = useState<{
+    greenIcon: any
+    redIcon: any
+  } | null>(null)
 
-  /* ✅ Create Leaflet icons ONLY on client */
+  // ✅ Leaflet + icons ONLY on client
   useEffect(() => {
-    import('leaflet').then(L => {
+    let mounted = true
+
+    async function initLeaflet() {
+      if (typeof window === 'undefined') return
+
+      await applyLeafletFix()
+
+      const L = await import('leaflet')
+
       const greenIcon = new L.Icon({
         iconUrl:
           'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
         shadowUrl:
           'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         iconSize: [25, 41],
-        iconAnchor: [12, 41], // 🔴 exact ground point
+        iconAnchor: [12, 41],
         popupAnchor: [1, -34],
         shadowSize: [41, 41]
       })
@@ -44,8 +78,13 @@ export default function EmployeeMap() {
         shadowSize: [41, 41]
       })
 
-      setIcons({ greenIcon, redIcon })
-    })
+      if (mounted) setIcons({ greenIcon, redIcon })
+    }
+
+    initLeaflet()
+    return () => {
+      mounted = false
+    }
   }, [])
 
   useEffect(() => {
@@ -99,13 +138,11 @@ export default function EmployeeMap() {
               position={[m.latitude, m.longitude]}
               icon={m.punch_type === 'IN' ? icons.greenIcon : icons.redIcon}
             >
-              {/* 👤 Name slightly ABOVE marker */}
               <Tooltip
                 permanent
                 direction="top"
-                offset={[0, -28]} // ⭐ PERFECT placement
+                offset={[0, -28]}
                 opacity={1}
-                className="employee-label"
               >
                 {m.employee_name}
               </Tooltip>
