@@ -149,11 +149,13 @@ export default function Attendance() {
   }
 
   const openMap = (lat: number, lng: number) => {
-    window.open(
-      `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}`,
-      '_blank'
-    )
-  }
+  const zoom = 16 // city-level zoom
+  window.open(
+    `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=${zoom}/${lat}/${lng}`,
+    '_blank'
+  )
+}
+
 
   const openPhoto = (path: string) => {
     const url = supabase.storage
