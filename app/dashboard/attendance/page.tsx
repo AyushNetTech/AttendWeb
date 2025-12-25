@@ -11,16 +11,15 @@ type AttendanceRow = {
   longitude: number
   photo_path: string
   employees: {
-  name: string | null
-  employee_code: string | null
-  department: string | null
-  designation: string | null
-} | null
-
+    name: string | null
+    employee_code: string | null
+    department: string | null
+    designation: string | null
+  } | null
 }
 
-
 const PAGE_SIZE = 10
+const DEBOUNCE_MS = 400
 
 export default function Attendance() {
   const [rows, setRows] = useState<AttendanceRow[]>([])
@@ -38,13 +37,41 @@ export default function Attendance() {
   const [departments, setDepartments] = useState<string[]>([])
   const [designations, setDesignations] = useState<string[]>([])
 
+  // ⏳ Debounced values
+  const [debouncedFilters, setDebouncedFilters] = useState({
+    fromDate,
+    toDate,
+    name,
+    code,
+    department,
+    designation
+  })
+
   useEffect(() => {
     loadFilters()
   }, [])
 
+  // ✅ Debounce filter changes
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1)
+      setDebouncedFilters({
+        fromDate,
+        toDate,
+        name,
+        code,
+        department,
+        designation
+      })
+    }, DEBOUNCE_MS)
+
+    return () => clearTimeout(t)
+  }, [fromDate, toDate, name, code, department, designation])
+
+  // 🔄 Load data when page OR debounced filters change
   useEffect(() => {
     loadAttendance()
-  }, [page, fromDate, toDate, name, code, department, designation])
+  }, [page, debouncedFilters])
 
   async function loadFilters() {
     const { data } = await supabase
@@ -76,39 +103,38 @@ export default function Attendance() {
     if (!company) return
 
     let query = supabase
-  .from('attendance')
-  .select(
-    `
-    id,
-    punch_type,
-    punch_time,
-    latitude,
-    longitude,
-    photo_path,
-    employees!inner (
-      name,
-      employee_code,
-      department,
-      designation
-    )
-  `,
-    { count: 'exact' }
-  )
-  .eq('company_id', company.id)
+      .from('attendance')
+      .select(
+        `
+        id,
+        punch_type,
+        punch_time,
+        latitude,
+        longitude,
+        photo_path,
+        employees!inner (
+          name,
+          employee_code,
+          department,
+          designation
+        )
+      `,
+        { count: 'exact' }
+      )
+      .eq('company_id', company.id)
 
+    const f = debouncedFilters
 
-    // 📅 Date range filter
-    if (fromDate)
-      query = query.gte('punch_time', `${fromDate}T00:00:00`)
-    if (toDate)
-      query = query.lte('punch_time', `${toDate}T23:59:59`)
-
-    if (name) query = query.ilike('employees.name', `%${name}%`)
-    if (code) query = query.ilike('employees.employee_code', `%${code}%`)
-    if (department !== 'ALL')
-      query = query.eq('employees.department', department)
-    if (designation !== 'ALL')
-      query = query.eq('employees.designation', designation)
+    if (f.fromDate)
+      query = query.gte('punch_time', `${f.fromDate}T00:00:00`)
+    if (f.toDate)
+      query = query.lte('punch_time', `${f.toDate}T23:59:59`)
+    if (f.name) query = query.ilike('employees.name', `%${f.name}%`)
+    if (f.code) query = query.ilike('employees.employee_code', `%${f.code}%`)
+    if (f.department !== 'ALL')
+      query = query.eq('employees.department', f.department)
+    if (f.designation !== 'ALL')
+      query = query.eq('employees.designation', f.designation)
 
     const from = (page - 1) * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
@@ -139,124 +165,90 @@ export default function Attendance() {
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   return (
-    <div className="p-6 flex flex-col h-full">
-      <h1 className="text-2xl font-bold mb-4">Attendance</h1>
+    <div className="p-4 md:p-6 flex flex-col h-full">
+      <h1 className="text-xl md:text-2xl font-bold mb-2">Attendance</h1>
 
       {/* 🔎 Filters */}
-      <div className="bg-white border rounded-xl p-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+      <div className="bg-white border rounded-xl p-2 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-7 gap-2">
 
-          {/* From Date */}
-          <div>
-            <label className="block text-sm font-medium mb-1">From Date</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={e => setFromDate(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={e => setFromDate(e.target.value)}
+            className="border p-2 rounded"
+            placeholder="From"
+          />
 
-          {/* To Date */}
-          <div>
-            <label className="block text-sm font-medium mb-1">To Date</label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={e => setToDate(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
+          <input
+            type="date"
+            value={toDate}
+            onChange={e => setToDate(e.target.value)}
+            className="border p-2 rounded"
+            placeholder="To"
+          />
 
-          {/* Employee Name */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Employee Name</label>
-            <input
-              placeholder="Search by name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
+          <input
+            placeholder="Employee name"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            className="border p-2 rounded"
+          />
 
-          {/* Employee Code */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Employee Code</label>
-            <input
-              placeholder="Search by code"
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              className="border p-2 rounded w-full"
-            />
-          </div>
+          <input
+            placeholder="Employee code"
+            value={code}
+            onChange={e => setCode(e.target.value)}
+            className="border p-2 rounded"
+          />
 
-          {/* Department */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Department</label>
-            <select
-              value={department}
-              onChange={e => setDepartment(e.target.value)}
-              className="border p-2 rounded w-full"
-            >
-              {departments.map(d => (
-                <option key={d} value={d}>
-                  {d === 'ALL' ? 'All Departments' : d}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={department}
+            onChange={e => setDepartment(e.target.value)}
+            className="border p-2 rounded"
+          >
+            {departments.map(d => (
+              <option key={d} value={d}>
+                {d === 'ALL' ? 'All Departments' : d}
+              </option>
+            ))}
+          </select>
 
-          {/* Designation */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Designation</label>
-            <select
-              value={designation}
-              onChange={e => setDesignation(e.target.value)}
-              className="border p-2 rounded w-full"
-            >
-              {designations.map(d => (
-                <option key={d} value={d}>
-                  {d === 'ALL' ? 'All Designations' : d}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={designation}
+            onChange={e => setDesignation(e.target.value)}
+            className="border p-2 rounded"
+          >
+            {designations.map(d => (
+              <option key={d} value={d}>
+                {d === 'ALL' ? 'All Designations' : d}
+              </option>
+            ))}
+          </select>
 
-          {/* Buttons */}
-          <div className="flex items-end gap-2">
-            <button
-              onClick={() => setPage(1)}
-              className="bg-blue-600 text-white rounded px-4 py-2 w-full"
-            >
-              Apply
-            </button>
-
-            <button
-              onClick={() => {
-                setFromDate('')
-                setToDate('')
-                setName('')
-                setCode('')
-                setDepartment('ALL')
-                setDesignation('ALL')
-                setPage(1)
-              }}
-              className="border rounded px-4 py-2 w-full"
-            >
-              Clear
-            </button>
-          </div>
+          <button
+          onClick={() => {
+            setFromDate('')
+            setToDate('')
+            setName('')
+            setCode('')
+            setDepartment('ALL')
+            setDesignation('ALL')
+          }}
+          className="border p-2 rounded"
+        >
+          Clear Filters
+        </button>
 
         </div>
       </div>
 
-
-      {/* 📜 Scrollable Table */}
+      {/* 📜 Table */}
       <div className="flex-1 overflow-auto border rounded-xl bg-white">
-        <table className="w-full">
+        <table className="min-w-[900px] w-full">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="p-3">Name</th>
+              <th className="p-3 text-left">Name</th>
               <th>Code</th>
               <th>Dept</th>
               <th>Designation</th>
@@ -269,47 +261,37 @@ export default function Attendance() {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={7}
-                  className="p-6 text-center text-gray-500 italic"
-                >
-                  No attendance records found
+                <td colSpan={7} className="p-6 text-center text-gray-500">
+                  No records found
                 </td>
               </tr>
             ) : (
-              rows.map(r => {
-                const emp = r.employees
-
-
-                return (
-                  <tr key={r.id} className="border-t">
-                    <td className="p-3">{emp?.name || '-'}</td>
-                    <td>{emp?.employee_code || '-'}</td>
-                    <td>{emp?.department || '-'}</td>
-                    <td>{emp?.designation || '-'}</td>
-                    <td>{r.punch_type}</td>
-                    <td>{new Date(r.punch_time).toLocaleString()}</td>
-                    <td className="space-x-2">
-                      <button
-                        onClick={() => openPhoto(r.photo_path)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded"
-                      >
-                        Photo
-                      </button>
-                      <button
-                        onClick={() => openMap(r.latitude, r.longitude)}
-                        className="px-3 py-1 bg-green-600 text-white rounded"
-                      >
-                        Map
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })
-
+              rows.map(r => (
+                <tr key={r.id} className="border-t">
+                  <td className="p-3">{r.employees?.name ?? '-'}</td>
+                  <td>{r.employees?.employee_code ?? '-'}</td>
+                  <td>{r.employees?.department ?? '-'}</td>
+                  <td>{r.employees?.designation ?? '-'}</td>
+                  <td>{r.punch_type}</td>
+                  <td>{new Date(r.punch_time).toLocaleString()}</td>
+                  <td className="space-x-2">
+                    <button
+                      onClick={() => openPhoto(r.photo_path)}
+                      className="px-3 py-1 bg-blue-600 text-white rounded"
+                    >
+                      Photo
+                    </button>
+                    <button
+                      onClick={() => openMap(r.latitude, r.longitude)}
+                      className="px-3 py-1 bg-green-600 text-white rounded"
+                    >
+                      Map
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
-
         </table>
       </div>
 
@@ -323,7 +305,7 @@ export default function Attendance() {
           Prev
         </button>
 
-        <span>
+        <span className="text-sm">
           Page {page} of {totalPages}
         </span>
 

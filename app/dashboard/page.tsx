@@ -74,14 +74,14 @@ export default function Dashboard() {
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
 
       {/* Cards */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-3 gap-6 mb-6 m-6">
         <Card title="Total Employees" value={stats.total} />
         <Card title="Present Today" value={stats.present} green />
         <Card title="Absent Today" value={stats.absent} red />
       </div>
 
       {/* Chart */}
-      <div className="bg-white rounded-xl shadow p-6 w-full max-w-xl">
+      <div className="bg-white rounded-xl shadow p-6 w-full max-w-xl m-6">
         <h2 className="font-semibold mb-4">Today Attendance</h2>
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
