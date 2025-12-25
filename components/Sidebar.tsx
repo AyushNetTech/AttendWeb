@@ -30,7 +30,7 @@ export default function Sidebar() {
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    router.replace('/auth')
+    router.replace('/')
   }
 
   return (
