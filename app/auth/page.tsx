@@ -30,7 +30,7 @@ export default function AuthPage() {
         password
       })
 
-      if (!error) router.push('/')
+      if (!error) router.push('/dashboard')
     }
   }
 
