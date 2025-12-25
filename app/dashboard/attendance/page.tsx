@@ -235,7 +235,7 @@ export default function Attendance() {
             setDepartment('ALL')
             setDesignation('ALL')
           }}
-          className="border p-2 rounded"
+          className="border p-2 rounded bg-red-500 text-white"
         >
           Clear Filters
         </button>
