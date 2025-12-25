@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import 'leaflet/dist/leaflet.css'
 import { applyLeafletFix } from '@/lib/leafletFix'
-
 import dynamic from 'next/dynamic'
+import FitBounds from '@/components/FitBounds'
 
-// ✅ Dynamically import react-leaflet (SSR OFF)
+// 🚫 SSR disabled
 const MapContainer = dynamic(
   () => import('react-leaflet').then(m => m.MapContainer),
   { ssr: false }
@@ -45,15 +45,14 @@ export default function EmployeeMap() {
     redIcon: any
   } | null>(null)
 
-  // ✅ Leaflet + icons ONLY on client
+  // ✅ Init Leaflet icons safely
   useEffect(() => {
     let mounted = true
 
-    async function initLeaflet() {
+    async function init() {
       if (typeof window === 'undefined') return
 
       await applyLeafletFix()
-
       const L = await import('leaflet')
 
       const greenIcon = new L.Icon({
@@ -81,7 +80,7 @@ export default function EmployeeMap() {
       if (mounted) setIcons({ greenIcon, redIcon })
     }
 
-    initLeaflet()
+    init()
     return () => {
       mounted = false
     }
@@ -107,7 +106,7 @@ export default function EmployeeMap() {
       company_uuid: company.id
     })
 
-    if (data) setMarkers(data)
+    setMarkers(data || [])
     setLoading(false)
   }
 
@@ -122,15 +121,14 @@ export default function EmployeeMap() {
       </h1>
 
       <div className="h-[600px] rounded-xl overflow-hidden border">
-        <MapContainer
-          center={[20.5937, 78.9629]}
-          zoom={5}
-          className="h-full w-full"
-        >
+        <MapContainer className="h-full w-full">
           <TileLayer
             attribution="© OpenStreetMap"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+
+          {/* ✅ AUTO ZOOM & CENTER */}
+          <FitBounds markers={markers} />
 
           {markers.map((m, i) => (
             <Marker
@@ -138,36 +136,29 @@ export default function EmployeeMap() {
               position={[m.latitude, m.longitude]}
               icon={m.punch_type === 'IN' ? icons.greenIcon : icons.redIcon}
             >
-              <Tooltip
-                permanent
-                direction="top"
-                offset={[0, -28]}
-                opacity={1}
-              >
+              <Tooltip permanent direction="top" offset={[0, -28]}>
                 {m.employee_name}
               </Tooltip>
 
               <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold">{m.employee_name}</p>
-                  <p>
-                    Status:{' '}
-                    <span
-                      className={
-                        m.punch_type === 'IN'
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }
-                    >
-                      {m.punch_type}
-                    </span>
-                  </p>
-                  <p>
-                    {new Date(m.punch_time).toLocaleString('en-IN', {
-                      timeZone: 'Asia/Kolkata'
-                    })}
-                  </p>
-                </div>
+                <p className="font-semibold">{m.employee_name}</p>
+                <p>
+                  Status:{' '}
+                  <span
+                    className={
+                      m.punch_type === 'IN'
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }
+                  >
+                    {m.punch_type}
+                  </span>
+                </p>
+                <p>
+                  {new Date(m.punch_time).toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata'
+                  })}
+                </p>
               </Popup>
             </Marker>
           ))}
