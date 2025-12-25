@@ -1,31 +1,38 @@
 'use client'
 
+export const dynamic = 'force-dynamic' // ✅ CRITICAL FIX
+
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import 'leaflet/dist/leaflet.css'
 import { applyLeafletFix } from '@/lib/leafletFix'
-import dynamic from 'next/dynamic'
-import FitBounds from '@/components/FitBounds'
+import dynamicImport from 'next/dynamic'
 
-// 🚫 SSR disabled
-const MapContainer = dynamic(
+// 🚫 SSR disabled for react-leaflet
+const MapContainer = dynamicImport(
   () => import('react-leaflet').then(m => m.MapContainer),
   { ssr: false }
 )
-const TileLayer = dynamic(
+const TileLayer = dynamicImport(
   () => import('react-leaflet').then(m => m.TileLayer),
   { ssr: false }
 )
-const Marker = dynamic(
+const Marker = dynamicImport(
   () => import('react-leaflet').then(m => m.Marker),
   { ssr: false }
 )
-const Popup = dynamic(
+const Popup = dynamicImport(
   () => import('react-leaflet').then(m => m.Popup),
   { ssr: false }
 )
-const Tooltip = dynamic(
+const Tooltip = dynamicImport(
   () => import('react-leaflet').then(m => m.Tooltip),
+  { ssr: false }
+)
+
+// 🚫 SSR disabled for FitBounds (VERY IMPORTANT)
+const FitBounds = dynamicImport(
+  () => import('@/components/FitBounds'),
   { ssr: false }
 )
 
@@ -45,7 +52,7 @@ export default function EmployeeMap() {
     redIcon: any
   } | null>(null)
 
-  // ✅ Init Leaflet icons safely
+  // ✅ Init Leaflet icons (client only)
   useEffect(() => {
     let mounted = true
 
@@ -127,7 +134,7 @@ export default function EmployeeMap() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {/* ✅ AUTO ZOOM & CENTER */}
+          {/* ✅ AUTO CENTER & ZOOM */}
           <FitBounds markers={markers} />
 
           {markers.map((m, i) => (
