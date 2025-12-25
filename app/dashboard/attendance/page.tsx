@@ -248,42 +248,42 @@ export default function Attendance() {
         <table className="min-w-[900px] w-full">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="p-3 text-left">Name</th>
-              <th>Code</th>
-              <th>Dept</th>
-              <th>Designation</th>
-              <th>Type</th>
-              <th>Time</th>
-              <th>Actions</th>
+              <th className="p-2 text-left">Name</th>
+              <th className="text-center">Code</th>
+              <th className="text-center">Dept</th>
+              <th className="text-center">Designation</th>
+              <th className="text-center">Type</th>
+              <th className="text-center">Time</th>
+              <th className="text-center">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-6 text-center text-gray-500">
+                <td colSpan={7} className="p-6 text-center text-red-500">
                   No records found
                 </td>
               </tr>
             ) : (
               rows.map(r => (
                 <tr key={r.id} className="border-t">
-                  <td className="p-3">{r.employees?.name ?? '-'}</td>
-                  <td>{r.employees?.employee_code ?? '-'}</td>
-                  <td>{r.employees?.department ?? '-'}</td>
-                  <td>{r.employees?.designation ?? '-'}</td>
-                  <td>{r.punch_type}</td>
-                  <td>{new Date(r.punch_time).toLocaleString()}</td>
-                  <td className="space-x-2">
+                  <td className="p-2">{r.employees?.name ?? '-'}</td>
+                  <td className="text-center">{r.employees?.employee_code ?? '-'}</td>
+                  <td className="text-center">{r.employees?.department ?? '-'}</td>
+                  <td className="text-center">{r.employees?.designation ?? '-'}</td>
+                  <td className="text-center">{r.punch_type}</td>
+                  <td className="text-center">{new Date(r.punch_time).toLocaleString()}</td>
+                  <td className="space-x-2 text-center">
                     <button
                       onClick={() => openPhoto(r.photo_path)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded"
+                      className="px-2 py-1 bg-blue-600 text-white rounded"
                     >
                       Photo
                     </button>
                     <button
                       onClick={() => openMap(r.latitude, r.longitude)}
-                      className="px-3 py-1 bg-green-600 text-white rounded"
+                      className="px-2 py-1 bg-green-600 text-white rounded"
                     >
                       Map
                     </button>
