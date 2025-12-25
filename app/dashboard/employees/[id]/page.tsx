@@ -74,9 +74,9 @@ export default function EditEmployee() {
   if (!form) return null
 
   return (
-    <div className="max-w-2xl mx-auto px-4">
+    <div className="max-w-2xl mx-auto px-2 m-4">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-6 mb-5">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
@@ -91,8 +91,8 @@ export default function EditEmployee() {
       </div>
 
       {/* Card */}
-      <div className="bg-white rounded-2xl border shadow-sm p-8">
-        <div className="grid gap-5">
+      <div className="bg-white rounded-2xl border shadow-sm p-5">
+        <div className="grid gap-3">
           {/* Name */}
           <Field
             label="Employee Name"
@@ -150,7 +150,7 @@ export default function EditEmployee() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between mt-10">
+        <div className="flex items-center justify-between mt-5">
           <button
             onClick={deleteEmployee}
             className="text-sm font-medium text-red-600 hover:underline"

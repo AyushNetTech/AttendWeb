@@ -74,7 +74,7 @@ export default function AddEmployee() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto m-6">
       <div className="bg-white rounded-2xl shadow-md p-8">
         <h1 className="text-2xl font-semibold mb-6">
           Add New Employee
