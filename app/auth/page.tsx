@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 export default function AuthPage() {
   const [isSignup, setIsSignup] = useState(false)
@@ -22,6 +23,7 @@ export default function AuthPage() {
 
       if (!error) {
         alert('Verification email sent. Please verify and login.')
+        notifySuccess('Verification email sent. Please verify and login.')
         setIsSignup(false)
       }
     } else {
