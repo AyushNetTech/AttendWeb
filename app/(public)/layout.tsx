@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 
 export default function PublicLayout({
   children,
@@ -9,6 +10,13 @@ export default function PublicLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+
+  const navLinks = [
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+  ]
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -20,13 +28,9 @@ export default function PublicLayout({
             Attend<span className="text-blue-600">On</span>
           </Link>
 
-          {/* NAV */}
+          {/* DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            {[
-              { href: '/pricing', label: 'Pricing' },
-              { href: '/about', label: 'About' },
-              { href: '/contact', label: 'Contact' },
-            ].map(link => (
+            {navLinks.map(link => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -41,8 +45,8 @@ export default function PublicLayout({
             ))}
           </nav>
 
-          {/* ACTIONS */}
-          <div className="flex items-center gap-3">
+          {/* DESKTOP ACTIONS */}
+          <div className="hidden md:flex items-center gap-3">
             <Link
               href="/auth"
               className="text-sm px-4 py-2 rounded hover:bg-gray-100"
@@ -56,9 +60,52 @@ export default function PublicLayout({
               Sign up
             </Link>
           </div>
-        </div>
-      </header>
 
+          {/* MOBILE BUTTON */}
+          <button
+            onClick={() => setOpen(v => !v)}
+            className="md:hidden p-2 rounded hover:bg-gray-100"
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
+        </div>
+
+        {/* MOBILE MENU */}
+        {open && (
+          <div className="md:hidden border-t bg-white">
+            <div className="px-6 py-4 flex flex-col gap-4 text-sm">
+              {navLinks.map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className={pathname === link.href ? 'font-semibold text-blue-600' : ''}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              <hr />
+
+              <Link
+                href="/auth"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 rounded border text-center"
+              >
+                Login
+              </Link>
+              <Link
+                href="/auth"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 rounded bg-blue-600 text-white text-center"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
+        )}
+      </header>
 
       {/* CONTENT */}
       <main className="flex-1">{children}</main>
@@ -85,7 +132,6 @@ export default function PublicLayout({
           </div>
         </div>
       </footer>
-
     </div>
   )
 }
