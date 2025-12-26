@@ -19,7 +19,7 @@ export default function PricingPage() {
         Choose a plan that fits your business
       </p>
 
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-3 gap-8 border rounded-2xl p-8 text-center hover:shadow-xl hover:-translate-y-1 transition">
         {/* BASIC */}
         <div className="border rounded-xl p-8 text-center">
           <h2 className="text-xl font-semibold mb-2">Basic</h2>
@@ -41,7 +41,7 @@ export default function PricingPage() {
         </div>
 
         {/* PRO */}
-        <div className="border-2 border-blue-600 rounded-xl p-8 text-center shadow-lg">
+        <div className="border-2 border-blue-600 rounded-xl p-8 text-center shadow-xl scale-105">
           <h2 className="text-xl font-semibold mb-2">Pro</h2>
           <p className="text-4xl font-bold mb-4">₹199</p>
           <p className="text-gray-500 mb-6">per employee / month</p>
