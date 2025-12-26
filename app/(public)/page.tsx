@@ -1,6 +1,8 @@
 
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { FadeUp, FadeIn } from '@/components/Motion'
+
 
 export const metadata: Metadata = {
   title: 'Online Attendance System for Modern Companies',
@@ -43,33 +45,40 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.15),transparent_60%)]" />
 
         <div className="relative max-w-7xl mx-auto px-6 py-28 text-center">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
-            Smart Attendance
-            <br />
-            <span className="text-blue-200">For Modern Teams</span>
-          </h1>
+          <FadeUp>
+            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
+              Smart Attendance
+              <br />
+              <span className="text-blue-200">For Modern Teams</span>
+            </h1>
+          </FadeUp>
 
-          <p className="text-lg md:text-xl mb-10 max-w-3xl mx-auto text-blue-100">
-            GPS-based attendance, photo verification, live maps and powerful reports —
-            built for growing companies.
-          </p>
+          <FadeUp delay={0.15}>
+            <p className="text-lg md:text-xl mb-10 max-w-3xl mx-auto text-blue-100">
+              GPS-based attendance, photo verification, live maps and powerful reports —
+              built for growing companies.
+            </p>
+          </FadeUp>
 
-          <div className="flex justify-center gap-4">
-            <Link
-              href="/auth"
-              className="px-8 py-4 bg-white text-blue-700 font-semibold rounded-lg shadow-lg hover:scale-105 transition"
-            >
-              Start Free Trial
-            </Link>
-            <Link
-              href="/pricing"
-              className="px-8 py-4 border border-white/40 rounded-lg hover:bg-white/10 transition"
-            >
-              View Pricing
-            </Link>
-          </div>
+          <FadeUp delay={0.3}>
+            <div className="flex justify-center gap-4">
+              <Link
+                href="/auth"
+                className="px-8 py-4 bg-white text-blue-700 font-semibold rounded-lg shadow-lg hover:scale-105 transition"
+              >
+                Start Free Trial
+              </Link>
+              <Link
+                href="/pricing"
+                className="px-8 py-4 border border-white/40 rounded-lg hover:bg-white/10 transition"
+              >
+                View Pricing
+              </Link>
+            </div>
+          </FadeUp>
         </div>
       </section>
+
 
 
       {/* FEATURES */}
@@ -81,18 +90,18 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((f, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border p-6 bg-white shadow-sm hover:shadow-xl transition"
-              >
-                <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-xl">
-                  ✓
+              <FadeUp key={i} delay={i * 0.1}>
+                <div className="rounded-2xl border p-6 bg-white shadow-sm hover:shadow-xl transition">
+                  <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-xl">
+                    ✓
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
+                  <p className="text-gray-600 text-sm">{f.desc}</p>
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-600 text-sm">{f.desc}</p>
-              </div>
+              </FadeUp>
             ))}
           </div>
+
 
         </div>
       </section>
@@ -100,21 +109,29 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-3xl mx-auto text-center px-6">
-          <h2 className="text-3xl font-bold mb-4">
-            Ready to Modernize Attendance?
-          </h2>
-          <p className="text-gray-600 mb-8">
-            Start using AttendOn today and manage your workforce efficiently.
-          </p>
+          <FadeIn>
+            <h2 className="text-3xl font-bold mb-4">
+              Ready to Modernize Attendance?
+            </h2>
+          </FadeIn>
 
-          <Link
-            href="/auth"
-            className="px-8 py-4 bg-blue-600 text-white rounded-lg text-lg"
-          >
-            Start Free Trial
-          </Link>
+          <FadeIn delay={0.15}>
+            <p className="text-gray-600 mb-8">
+              Start using AttendOn today and manage your workforce efficiently.
+            </p>
+          </FadeIn>
+
+          <FadeUp delay={0.3}>
+            <Link
+              href="/auth"
+              className="px-8 py-4 bg-blue-600 text-white rounded-lg text-lg"
+            >
+              Start Free Trial
+            </Link>
+          </FadeUp>
         </div>
       </section>
+
     </>
   )
 }
