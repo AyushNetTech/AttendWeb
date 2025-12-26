@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
+  applicationName: 'AttendOn',
   title: {
     default: 'AttendOn – Online Attendance Management System',
     template: '%s | AttendOn',
@@ -15,6 +16,8 @@ export const metadata: Metadata = {
     'GPS attendance',
     'photo attendance',
     'attendance app for companies',
+    'attendance software',
+    'attendance tracking app',
   ],
   authors: [{ name: 'AttendOn' }],
   creator: 'AttendOn',

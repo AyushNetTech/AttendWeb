@@ -7,7 +7,7 @@ import { FadeUp, FadeIn } from '@/components/Motion'
 export const metadata: Metadata = {
   title: 'Online Attendance System for Modern Companies',
   description:
-    'Simplify attendance with GPS-based punch-in, photos, employee reports, and live maps. Built for modern teams.',
+    'AttendOn is a modern online attendance system with GPS punch-in, photo verification, live employee map, reports, and exports.',
 }
 
 const features=[
