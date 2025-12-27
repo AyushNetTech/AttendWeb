@@ -32,8 +32,9 @@ type AttendanceRow = {
     employee_code: string | null
     department: string | null
     designation: string | null
-  } | null
+  }| null
 }
+
 
 type EmployeeOption = {
   id: number
@@ -192,11 +193,11 @@ export default function Attendance() {
     const from = (p - 1) * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
 
-    const { data, count } = await query
+    const { data, count } = await query.returns<AttendanceRow[]>()
       .order('punch_time', { ascending: false })
       .range(from, to)
 
-    setRows(data ?? [])
+    setRows(Array.isArray(data) ? data : [])
     setTotal(count ?? 0)
   }
 
@@ -253,7 +254,7 @@ useEffect(() => {
 
   /* -------- GRID DATA -------- */
 
- const gridRows = rows.map(r => {
+  const gridRows = rows.map(r => {
   const emp = r.employees
   const key = `${r.latitude},${r.longitude}`
 
