@@ -1,13 +1,16 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import {
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip
-} from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { useRouter } from 'next/navigation'
 
 const COLORS = ['#22c55e', '#ef4444']
 
 export default function Dashboard() {
+  const router = useRouter()
+  const [checking, setChecking] = useState(true)
+
   const [stats, setStats] = useState({
     total: 0,
     present: 0,
@@ -15,24 +18,44 @@ export default function Dashboard() {
   })
 
   useEffect(() => {
-    loadStats()
-  }, [])
+    const init = async () => {
+      // 1️⃣ Auth check
+      const { data: authData } = await supabase.auth.getUser()
 
-  async function loadStats() {
-    // 1️⃣ Get logged-in user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+      if (!authData?.user) {
+        router.replace('/auth')
+        return
+      }
 
-    // 2️⃣ Get company of this user
-    const { data: company, error: companyError } = await supabase
+      // 2️⃣ Company check
+      const { data: company } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('owner_id', authData.user.id)
+        .maybeSingle()
+
+      if (!company) {
+        router.replace('/company/setup')
+        return
+      }
+
+      // 3️⃣ Load dashboard data only if allowed
+      await loadStats(authData.user.id)
+      setChecking(false)
+    }
+
+    init()
+  }, [router])
+
+  async function loadStats(userId: string) {
+    const { data: company } = await supabase
       .from('companies')
       .select('id')
-      .eq('owner_id', user.id)
-      .maybeSingle()
+      .eq('owner_id', userId)
+      .single()
 
-    if (companyError || !company) return
+    if (!company) return
 
-    // 3️⃣ Get employees of this company
     const { data: employees } = await supabase
       .from('employees')
       .select('id')
@@ -40,13 +63,11 @@ export default function Dashboard() {
 
     const employeeIds = employees?.map(e => e.id) || []
 
-    // If no employees
     if (employeeIds.length === 0) {
       setStats({ total: 0, present: 0, absent: 0 })
       return
     }
 
-    // 4️⃣ Get today attendance of only this company's employees
     const today = new Date().toISOString().slice(0, 10)
 
     const { data: punches } = await supabase
@@ -64,6 +85,10 @@ export default function Dashboard() {
     })
   }
 
+  // 🚫 BLOCK render until checks complete
+  if (checking) return null
+  // or return <FullPageLoader />
+
   const pieData = [
     { name: 'Present', value: stats.present },
     { name: 'Absent', value: stats.absent }
@@ -73,14 +98,12 @@ export default function Dashboard() {
     <>
       <h1 className="text-2xl font-bold mb-6 m-6">Dashboard</h1>
 
-      {/* Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6 m-6">
         <Card title="Total Employees" value={stats.total} />
         <Card title="Present Today" value={stats.present} green />
         <Card title="Absent Today" value={stats.absent} red />
       </div>
 
-      {/* Chart */}
       <div className="bg-white rounded-xl shadow p-6 w-full max-w-xl m-6">
         <h2 className="font-semibold mb-4">Today Attendance</h2>
         <ResponsiveContainer width="100%" height={300}>

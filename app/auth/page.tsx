@@ -3,38 +3,44 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import { notifyError, notifySuccess } from '@/lib/notify'
+import { notifySuccess } from '@/lib/notify'
 
 export default function AuthPage() {
   const [isSignup, setIsSignup] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading] = useState(false)
   const router = useRouter()
 
   const handleAuth = async () => {
-    if (isSignup) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${location.origin}/auth`
-        }
-      })
+  if (isSignup) {
+    await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${location.origin}/auth` }
+    })
+    notifySuccess('Verify email and login')
+    setIsSignup(false)
+  } else {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
 
-      if (!error) {
-        alert('Verification email sent. Please verify and login.')
-        notifySuccess('Verification email sent. Please verify and login.')
-        setIsSignup(false)
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+    if (error) return
 
-      if (!error) router.push('/dashboard')
-    }
+    const { data: authData } = await supabase.auth.getUser()
+
+    const { data: company } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('owner_id', authData!.user!.id)
+      .maybeSingle()
+
+    router.replace(company ? '/dashboard' : '/company/setup')
   }
+}
+
 
   return (
     <div className="max-w-sm mx-auto mt-24 p-6 bg-white rounded shadow">
@@ -57,9 +63,10 @@ export default function AuthPage() {
 
       <button
         onClick={handleAuth}
-        className="bg-blue-600 text-white w-full p-2 rounded"
+        disabled={loading}
+        className="bg-blue-600 text-white w-full p-2 rounded disabled:opacity-60"
       >
-        {isSignup ? 'Sign up' : 'Login'}
+        {loading ? 'Please wait…' : isSignup ? 'Sign up' : 'Login'}
       </button>
 
       <p className="text-sm text-center mt-4">

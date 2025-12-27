@@ -2,7 +2,7 @@
 
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function CompanySetup() {
   const router = useRouter()
@@ -11,6 +11,42 @@ export default function CompanySetup() {
   const [address, setAddress] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+const [checking, setChecking] = useState(true)
+
+useEffect(() => {
+  const check = async () => {
+    const { data: authData } = await supabase.auth.getUser()
+    if (!authData?.user) {
+      router.replace('/auth')
+      return
+    }
+
+    const { data: company } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('owner_id', authData.user.id)
+      .single()
+
+    if (company) {
+      router.replace('/dashboard')
+      return
+    }
+
+    setChecking(false)
+  }
+
+  check()
+}, [router])
+
+if (checking) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      Checking account…
+    </div>
+  )
+}
+
 
   const submit = async () => {
     setError(null)

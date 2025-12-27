@@ -1,3 +1,8 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 import PublicNavbar from '@/components/PublicNavbar'
 
 export default function PublicLayout({
@@ -5,6 +10,20 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
+const [checking, setChecking] = useState(true)
+
+useEffect(() => {
+  const checkSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) router.replace('/dashboard')
+    else setChecking(false)
+  }
+  checkSession()
+}, [])
+
+if (checking) return null
+
   return (
     <div className="min-h-screen flex flex-col">
       <PublicNavbar />
