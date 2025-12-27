@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
+import { useTheme, useMediaQuery } from '@mui/material'
+
+
 import {
   Box,
   Button,
@@ -20,6 +23,7 @@ import dayjs from 'dayjs'
 /* ---------------- TYPES ---------------- */
 
 type AttendanceRow = {
+  location_text: string
   id: number
   punch_type: 'IN' | 'OUT'
   punch_time: string
@@ -73,6 +77,10 @@ export default function Attendance() {
 
   const [fromDate, setFromDate] = useState(today)
   const [toDate, setToDate] = useState(today)
+
+  const theme = useTheme()
+const isLaptop = useMediaQuery(theme.breakpoints.down('lg')) // <= 1200px
+const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
   /* -------- INITIAL LOAD -------- */
 
@@ -159,13 +167,13 @@ export default function Attendance() {
 
     let query = supabase
       .from('attendance')
-      .select(
-        `
+      .select(`
         id,
         punch_type,
         punch_time,
         latitude,
         longitude,
+        location_text,
         photo_path,
         employees!inner (
           id,
@@ -217,40 +225,6 @@ export default function Attendance() {
     window.open(url, '_blank')
   }
 
-  async function resolveLocation(lat: number, lng: number) {
-  const key = `${lat},${lng}`
-
-  if (locationCache[key]) return locationCache[key]
-
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
-    )
-    const json = await res.json()
-
-    const place =
-      json.address?.city ||
-      json.address?.town ||
-      json.address?.village ||
-      json.address?.county ||
-      'Unknown location'
-
-    setLocationCache(prev => ({ ...prev, [key]: place }))
-    return place
-  } catch {
-    return 'Unknown location'
-  }
-}
-
-useEffect(() => {
-  rows.forEach(r => {
-    const key = `${r.latitude},${r.longitude}`
-    if (!locationCache[key]) {
-      resolveLocation(r.latitude, r.longitude)
-    }
-  })
-}, [rows])
-
 
   /* -------- GRID DATA -------- */
 
@@ -265,8 +239,9 @@ useEffect(() => {
     department: emp?.department ?? '-',
     designation: emp?.designation ?? '-',
     type: r.punch_type,
-    time: dayjs(r.punch_time).format('DD MMM YYYY, hh:mm A'),
-    location: locationCache[key] ?? '-',
+    date: dayjs(r.punch_time).format('DD-MM-YY'),
+    time: dayjs(r.punch_time).format('HH:mm'),
+    location: r.location_text ?? '-',
     photo: r.photo_path,
     lat: r.latitude,
     lng: r.longitude
@@ -276,55 +251,82 @@ useEffect(() => {
 
 
   const columns: GridColDef[] = [
-  { field: 'name', headerName: 'Name', flex: 1 },
-  { field: 'code', headerName: 'Code', width: 120 },
-  { field: 'department', headerName: 'Department', width: 160 },
-  { field: 'designation', headerName: 'Designation', width: 160 },
-  { field: 'type', headerName: 'Type', width: 100 },
-  { field: 'time', headerName: 'Time', width: 200 },
+      {
+        field: 'name',
+        headerName: 'Name',
+        flex: 1,
+        minWidth: 100
+      },
+      {
+        field: 'code',
+        headerName: 'Code',
+        flex: 0.2,
+        minWidth: 60
+      },
+      {
+        field: 'department',
+        headerName: 'Department',
+        flex: 1,
+        minWidth: 100
+      },
+      {
+        field: 'designation',
+        headerName: 'Designation',
+        flex: 1,
+        minWidth: 120
+      },
+      {
+        field: 'type',
+        headerName: 'Type',
+        flex: 0.5,
+        minWidth: 50
+      },
+      {
+        field: 'date',
+        headerName: 'Date',
+        flex: 0.5,
+        minWidth: 80
+      },
+      {
+        field: 'time',
+        headerName: 'Time',
+        flex: 0.5,
+        minWidth: 80
+      },
+      {
+        field: 'location',
+        headerName: 'Location',
+        flex: 1,
+        minWidth: 80
+      },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        minWidth: 150,
+        sortable: false,
+        renderCell: params => (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => openPhoto(params.row.photo)}
+            >
+              Photo
+            </Button>
+            <Button
+              size="small"
+              color="success"
+              variant="contained"
+              onClick={() => openMap(params.row.lat, params.row.lng)}
+            >
+              Map
+            </Button>
+          </Box>
+        )
+      }
+    ]
 
-  {
-    field: 'location',
-    headerName: 'Location',
-    width: 180
-  },
 
-  {
-  field: 'actions',
-  headerName: 'Actions',
-  width: 180,
-  sortable: false,
-  renderCell: params => (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-        justifyContent: 'center',
-        alignItems:"center",
-        width: '100%',
-        height:"100%"
-      }}
-    >
-      <Button
-        size="small"
-        variant="contained"
-        onClick={() => openPhoto(params.row.photo)}
-      >
-        Photo
-      </Button>
-      <Button
-        size="small"
-        color="success"
-        variant="contained"
-        onClick={() => openMap(params.row.lat, params.row.lng)}
-      >
-        Map
-      </Button>
-    </Box>
-  )
-}
-
-]
 
 
   /* -------- UI -------- */
@@ -335,123 +337,134 @@ useEffect(() => {
 
       {/* FILTER PANEL */}
       <Box
-  sx={{
-    backgroundColor: '#fff',
-    border: '1px solid #e5e7eb',
-    borderRadius: 2,
-    p: 2,
-    mb:2,
-    display: 'grid',
-    gridTemplateColumns: {
-      xs: '1fr',
-      sm: 'repeat(2, 1fr)',
-      md: 'repeat(5, 1fr)'
-    },
-    gap: 0.8,
-  }}
->
-  <MultiSelect
-    label="Department"
-    options={departments}
-    value={selectedDepartments}
-    onChange={setSelectedDepartments}
-    size="small"
-  />
+        sx={{
+          backgroundColor: '#fff',
+          border: '1px solid #c9c9c9ff',
+          borderRadius: 2,
+          p: 2,
+          mb: 2,
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(6, 1fr)'
+          },
+          gap: 1,
+          alignItems: 'center'
+        }}
+      >
+        <MultiSelect
+          label="Department"
+          options={departments}
+          value={selectedDepartments}
+          onChange={setSelectedDepartments}
+          size="small"
+        />
 
-  <MultiSelect
-    label="Designation"
-    options={designations}
-    value={selectedDesignations}
-    onChange={setSelectedDesignations}
-    disabled={!selectedDepartments.length}
-    size="small"
-  />
+        <MultiSelect
+          label="Designation"
+          options={designations}
+          value={selectedDesignations}
+          onChange={setSelectedDesignations}
+          disabled={!selectedDepartments.length}
+          size="small"
+        />
 
-  <MultiSelect
-    label="Employee"
-    options={employees
-      .filter(e =>
-        (!selectedDepartments.length || selectedDepartments.includes(e.department)) &&
-        (!selectedDesignations.length || selectedDesignations.includes(e.designation))
-      )
-      .map(e => ({
-        value: e.id,
-        label: `${e.name} (${e.code})`
-      }))}
-    value={selectedEmployees}
-    onChange={setSelectedEmployees}
-    disabled={!selectedDesignations.length}
-    size="small"
-  />
+        <MultiSelect
+          label="Employee"
+          options={employees
+            .filter(e =>
+              (!selectedDepartments.length || selectedDepartments.includes(e.department)) &&
+              (!selectedDesignations.length || selectedDesignations.includes(e.designation))
+            )
+            .map(e => ({
+              value: e.id,
+              label: `${e.name} (${e.code})`
+            }))}
+          value={selectedEmployees}
+          onChange={setSelectedEmployees}
+          disabled={!selectedDesignations.length}
+          size="small"
+        />
 
-  <TextField
-    size="small"
-    type="date"
-    label="From"
-    value={fromDate}
-    onChange={e => setFromDate(e.target.value)}
-    InputLabelProps={{ shrink: true }}
-  />
+        <TextField
+          size="small"
+          type="date"
+          label="From"
+          value={fromDate}
+          onChange={e => setFromDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
 
-  <TextField
-    size="small"
-    type="date"
-    label="To"
-    value={toDate}
-    onChange={e => setToDate(e.target.value)}
-    InputLabelProps={{ shrink: true }}
-  />
+        <TextField
+          size="small"
+          type="date"
+          label="To"
+          value={toDate}
+          onChange={e => setToDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+        />
 
-  <Box
-    sx={{
-      gridColumn: '1 / -1',
-      display: 'flex',
-      justifyContent: 'flex-end',
-      gap: 1,
-      mt: 0.5,
-    }}
-  >
-    <Button size="small" variant="outlined" color="error" onClick={clearFilters}>
-      Clear
-    </Button>
-    <Button size="small" variant="contained" onClick={applyFilters}>
-      Apply Filter
-    </Button>
-  </Box>
-</Box>
+        {/* BUTTONS */}
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', height:"100%"}}>
+          <Button size="small" variant="outlined" color="error" onClick={clearFilters} style={{backgroundColor:"#FF5C5C", color:"white"}}>
+            Clear
+          </Button>
+          <Button size="small" variant="contained" onClick={applyFilters} style={{flex:1}}>
+            Apply
+          </Button>
+        </Box>
+      </Box>
+
 
 
       {/* GRID */}
       <Box
         sx={{
-          height: { xs: 420, md: 520 },
+          height: isTablet ? 300 : 400, // ⬅ more space
           width: '100%',
+          overflowX: 'auto',
+
+          '& .MuiDataGrid-footerContainer': {
+            minHeight: 52 // ⬅ force pagination visible
+          },
+
           '& .MuiDataGrid-columnHeaders': {
             minHeight: 40,
             maxHeight: 40,
-            fontWeight:"bold", fontSize: 15,
-            background:"black"
+            fontSize: isTablet ? 12 : 14,
+            fontWeight: "bold",
+            backgroundColor: '#000000ff'
+
           },
+
           '& .MuiDataGrid-cell': {
-            py: 0.5,
-            fontSize: 14
+            py: 0.4,
+            fontSize: isTablet ? 12 : 13,
+            whiteSpace: 'nowrap'
           }
         }}
       >
-        <DataGrid
-          rows={gridRows}
-          columns={columns}
-          rowCount={total}
-          pageSizeOptions={[PAGE_SIZE]}
-          paginationModel={{ page: page - 1, pageSize: PAGE_SIZE }}
-          onPaginationModelChange={m => {
-            setPage(m.page + 1)
-            loadAttendance(m.page + 1)
-          }}
-          paginationMode="server"
-          density="compact"
-          disableRowSelectionOnClick
-        />
+
+
+      <DataGrid
+        rows={gridRows}
+        columns={columns}
+        rowCount={total}
+        pageSizeOptions={[PAGE_SIZE]}
+        paginationModel={{ page: page - 1, pageSize: PAGE_SIZE }}
+        onPaginationModelChange={m => {
+          setPage(m.page + 1)
+          loadAttendance(m.page + 1)
+        }}
+        paginationMode="server"
+        density="compact"
+        disableRowSelectionOnClick
+        disableColumnMenu
+        scrollbarSize={8}
+      />
+
+
 
       </Box>
     </div>
