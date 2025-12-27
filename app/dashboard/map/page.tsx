@@ -1,6 +1,15 @@
 'use client'
 
-export const dynamic = 'force-dynamic' // ✅ CRITICAL FIX
+// export const dynamic = 'force-dynamic' // ✅ CRITICAL FIX
+
+import dynamic from 'next/dynamic'
+
+// Lottie must be client-only
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false })
+
+import loadingAnim from '@/public/MapLoading.json'
+import emptyAnim from '@/public/NoDataAvailableOops.json'
+
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
@@ -118,8 +127,37 @@ export default function EmployeeMap() {
   }
 
   if (loading || !icons) {
-    return <div className="p-6">Loading map...</div>
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh_-_70px)]">
+        <Lottie
+          animationData={loadingAnim}
+          loop
+          className="w-64 h-64"
+        />
+        <p className="mt-4 text-gray-500">Loading attendance map…</p>
+      </div>
+    )
   }
+
+  if (!loading && markers.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh_-_70px)]">
+        <Lottie
+          animationData={emptyAnim}
+          loop
+          className="w-72 h-72"
+        />
+        <h2 className="text-lg font-semibold mt-4">
+          No attendance today
+        </h2>
+        <p className="text-gray-500">
+          Employees have not punched in yet
+        </p>
+      </div>
+    )
+  }
+
+
 
   return (
     <div className="p-6 h-[calc(100vh_-_70px)]">
