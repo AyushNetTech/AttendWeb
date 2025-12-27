@@ -2,6 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { DataGrid, GridColDef } from '@mui/x-data-grid'
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  TextField
+} from '@mui/material'
+import dayjs from 'dayjs'
+
+/* ---------------- TYPES ---------------- */
 
 type AttendanceRow = {
   id: number
@@ -11,6 +27,7 @@ type AttendanceRow = {
   longitude: number
   photo_path: string
   employees: {
+    id: number
     name: string | null
     employee_code: string | null
     department: string | null
@@ -18,82 +35,116 @@ type AttendanceRow = {
   } | null
 }
 
-const PAGE_SIZE = 10
-const DEBOUNCE_MS = 400
+type EmployeeOption = {
+  id: number
+  name: string
+  code: string
+  department: string
+  designation: string
+}
 
-const today = new Date().toISOString().slice(0, 10)
+const PAGE_SIZE = 50
+const today = dayjs().format('YYYY-MM-DD')
 
+type LocationCache = {
+  [key: string]: string
+}
+
+
+/* ---------------- COMPONENT ---------------- */
 
 export default function Attendance() {
   const [rows, setRows] = useState<AttendanceRow[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [locationCache, setLocationCache] = useState<LocationCache>({})
 
-  // 🔎 Filters
-  const [fromDate, setFromDate] = useState(today)
-  const [toDate, setToDate] = useState(today)
-  const [name, setName] = useState('')
-  const [code, setCode] = useState('')
-  const [department, setDepartment] = useState('ALL')
-  const [designation, setDesignation] = useState('ALL')
+
+  /* -------- FILTER STATE -------- */
 
   const [departments, setDepartments] = useState<string[]>([])
   const [designations, setDesignations] = useState<string[]>([])
+  const [employees, setEmployees] = useState<EmployeeOption[]>([])
 
-  async function loadFilters() {
-    const { data } = await supabase
-      .from('employees')
-      .select('department, designation')
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([])
+  const [selectedDesignations, setSelectedDesignations] = useState<string[]>([])
+  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([])
 
-    if (data) {
-      setDepartments([
-        'ALL',
-        ...Array.from(new Set(data.map(e => e.department).filter(Boolean)))
-      ])
-      setDesignations([
-        'ALL',
-        ...Array.from(new Set(data.map(e => e.designation).filter(Boolean)))
-      ])
-    }
-  }
+  const [fromDate, setFromDate] = useState(today)
+  const [toDate, setToDate] = useState(today)
 
-  // ⏳ Debounced values
-  const [debouncedFilters, setDebouncedFilters] = useState({
-    fromDate : today,
-    toDate : today,
-    name,
-    code,
-    department,
-    designation
-  })
+  /* -------- INITIAL LOAD -------- */
 
   useEffect(() => {
-    loadFilters()
+    loadFilterOptions()
+    applyFilters()
   }, [])
 
-  // ✅ Debounce filter changes
+  /* -------- LOAD FILTER OPTIONS -------- */
+
+  async function loadFilterOptions() {
+    const { data } = await supabase
+      .from('employees')
+      .select('id, name, employee_code, department, designation')
+
+    if (!data) return
+
+    setEmployees(
+      data.map(e => ({
+        id: e.id,
+        name: e.name ?? '',
+        code: e.employee_code ?? '',
+        department: e.department ?? '',
+        designation: e.designation ?? ''
+      }))
+    )
+
+    setDepartments(
+      Array.from(new Set(data.map(e => e.department).filter(Boolean)))
+    )
+  }
+
+  /* -------- DEPENDENT FILTERS -------- */
+
   useEffect(() => {
-    const t = setTimeout(() => {
-      setPage(1)
-      setDebouncedFilters({
-        fromDate,
-        toDate,
-        name,
-        code,
-        department,
-        designation
-      })
-    }, DEBOUNCE_MS)
+    const filtered = employees.filter(e =>
+      selectedDepartments.includes(e.department)
+    )
 
-    return () => clearTimeout(t)
-  }, [fromDate, toDate, name, code, department, designation])
+    setDesignations(
+      Array.from(new Set(filtered.map(e => e.designation)))
+    )
 
-  // 🔄 Load data when page OR debounced filters change
+    setSelectedDesignations([])
+    setSelectedEmployees([])
+  }, [selectedDepartments])
+
   useEffect(() => {
-    loadAttendance()
-  }, [page, debouncedFilters])
+    setSelectedEmployees([])
+  }, [selectedDesignations])
+  
 
-  async function loadAttendance() {
+  /* -------- APPLY FILTERS -------- */
+
+  async function applyFilters() {
+    setPage(1)
+    await loadAttendance(1)
+  }
+
+  /* -------- CLEAR FILTERS -------- */
+
+  function clearFilters() {
+    setSelectedDepartments([])
+    setSelectedDesignations([])
+    setSelectedEmployees([])
+    setFromDate(today)
+    setToDate(today)
+    loadAttendance(1)
+  }
+
+  /* -------- LOAD ATTENDANCE -------- */
+
+  async function loadAttendance(p = page) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -116,6 +167,7 @@ export default function Attendance() {
         longitude,
         photo_path,
         employees!inner (
+          id,
           name,
           employee_code,
           department,
@@ -125,40 +177,37 @@ export default function Attendance() {
         { count: 'exact' }
       )
       .eq('company_id', company.id)
+      .gte('punch_time', `${fromDate}T00:00:00`)
+      .lte('punch_time', `${toDate}T23:59:59`)
 
-    const f = debouncedFilters
+    if (selectedDepartments.length)
+      query = query.in('employees.department', selectedDepartments)
 
-    if (f.fromDate)
-      query = query.gte('punch_time', `${f.fromDate}T00:00:00`)
-    if (f.toDate)
-      query = query.lte('punch_time', `${f.toDate}T23:59:59`)
-    if (f.name) query = query.ilike('employees.name', `%${f.name}%`)
-    if (f.code) query = query.ilike('employees.employee_code', `%${f.code}%`)
-    if (f.department !== 'ALL')
-      query = query.eq('employees.department', f.department)
-    if (f.designation !== 'ALL')
-      query = query.eq('employees.designation', f.designation)
+    if (selectedDesignations.length)
+      query = query.in('employees.designation', selectedDesignations)
 
-    const from = (page - 1) * PAGE_SIZE
+    if (selectedEmployees.length)
+      query = query.in('employees.id', selectedEmployees)
+
+    const from = (p - 1) * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
 
     const { data, count } = await query
       .order('punch_time', { ascending: false })
       .range(from, to)
-      .returns<AttendanceRow[]>()
 
     setRows(data ?? [])
     setTotal(count ?? 0)
   }
 
-  const openMap = (lat: number, lng: number) => {
-  const zoom = 16 // city-level zoom
-  window.open(
-    `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=${zoom}/${lat}/${lng}`,
-    '_blank'
-  )
-}
+  /* -------- ACTION HELPERS -------- */
 
+  const openMap = (lat: number, lng: number) => {
+    window.open(
+      `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`,
+      '_blank'
+    )
+  }
 
   const openPhoto = (path: string) => {
     const url = supabase.storage
@@ -167,166 +216,285 @@ export default function Attendance() {
     window.open(url, '_blank')
   }
 
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  async function resolveLocation(lat: number, lng: number) {
+  const key = `${lat},${lng}`
+
+  if (locationCache[key]) return locationCache[key]
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`
+    )
+    const json = await res.json()
+
+    const place =
+      json.address?.city ||
+      json.address?.town ||
+      json.address?.village ||
+      json.address?.county ||
+      'Unknown location'
+
+    setLocationCache(prev => ({ ...prev, [key]: place }))
+    return place
+  } catch {
+    return 'Unknown location'
+  }
+}
+
+useEffect(() => {
+  rows.forEach(r => {
+    const key = `${r.latitude},${r.longitude}`
+    if (!locationCache[key]) {
+      resolveLocation(r.latitude, r.longitude)
+    }
+  })
+}, [rows])
+
+
+  /* -------- GRID DATA -------- */
+
+  const gridRows = rows.map(r => {
+    const key = `${r.latitude},${r.longitude}`
+
+    return {
+      id: r.id,
+      name: r.employees?.name ?? '-',
+      code: r.employees?.employee_code ?? '-',
+      department: r.employees?.department ?? '-',
+      designation: r.employees?.designation ?? '-',
+      type: r.punch_type,
+      time: dayjs(r.punch_time).format('DD MMM YYYY, hh:mm A'),
+      location: locationCache[key] ?? '-',
+      photo: r.photo_path,
+      lat: r.latitude,
+      lng: r.longitude
+    }
+  })
+
+
+  const columns: GridColDef[] = [
+  { field: 'name', headerName: 'Name', flex: 1 },
+  { field: 'code', headerName: 'Code', width: 120 },
+  { field: 'department', headerName: 'Department', width: 160 },
+  { field: 'designation', headerName: 'Designation', width: 160 },
+  { field: 'type', headerName: 'Type', width: 100 },
+  { field: 'time', headerName: 'Time', width: 200 },
+
+  {
+    field: 'location',
+    headerName: 'Location',
+    width: 180
+  },
+
+  {
+  field: 'actions',
+  headerName: 'Actions',
+  width: 180,
+  sortable: false,
+  renderCell: params => (
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 1,
+        justifyContent: 'center',
+        alignItems:"center",
+        width: '100%',
+        height:"100%"
+      }}
+    >
+      <Button
+        size="small"
+        variant="contained"
+        onClick={() => openPhoto(params.row.photo)}
+      >
+        Photo
+      </Button>
+      <Button
+        size="small"
+        color="success"
+        variant="contained"
+        onClick={() => openMap(params.row.lat, params.row.lng)}
+      >
+        Map
+      </Button>
+    </Box>
+  )
+}
+
+]
+
+
+  /* -------- UI -------- */
 
   return (
-    <div className="p-4 md:p-6 flex flex-col h-full">
-      <h1 className="text-xl md:text-2xl font-bold mb-2">Attendance</h1>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-3">Attendance</h1>
 
-      {/* 🔎 Filters */}
-      <div className="bg-white border rounded-xl p-2 mb-4">
-        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-7 gap-2">
+      {/* FILTER PANEL */}
+      <Box
+  sx={{
+    backgroundColor: '#fff',
+    border: '1px solid #e5e7eb',
+    borderRadius: 2,
+    p: 2,
+    mb:2,
+    display: 'grid',
+    gridTemplateColumns: {
+      xs: '1fr',
+      sm: 'repeat(2, 1fr)',
+      md: 'repeat(5, 1fr)'
+    },
+    gap: 0.8,
+  }}
+>
+  <MultiSelect
+    label="Department"
+    options={departments}
+    value={selectedDepartments}
+    onChange={setSelectedDepartments}
+    size="small"
+  />
 
-          <input
-            type="date"
-            value={fromDate}
-            onChange={e => setFromDate(e.target.value)}
-            className="border p-2 rounded"
-            placeholder="From"
-          />
+  <MultiSelect
+    label="Designation"
+    options={designations}
+    value={selectedDesignations}
+    onChange={setSelectedDesignations}
+    disabled={!selectedDepartments.length}
+    size="small"
+  />
 
-          <input
-            type="date"
-            value={toDate}
-            onChange={e => setToDate(e.target.value)}
-            className="border p-2 rounded"
-            placeholder="To"
-          />
+  <MultiSelect
+    label="Employee"
+    options={employees
+      .filter(e =>
+        (!selectedDepartments.length || selectedDepartments.includes(e.department)) &&
+        (!selectedDesignations.length || selectedDesignations.includes(e.designation))
+      )
+      .map(e => ({
+        value: e.id,
+        label: `${e.name} (${e.code})`
+      }))}
+    value={selectedEmployees}
+    onChange={setSelectedEmployees}
+    disabled={!selectedDesignations.length}
+    size="small"
+  />
 
-          <input
-            placeholder="Employee name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="border p-2 rounded"
-          />
+  <TextField
+    size="small"
+    type="date"
+    label="From"
+    value={fromDate}
+    onChange={e => setFromDate(e.target.value)}
+    InputLabelProps={{ shrink: true }}
+  />
 
-          <input
-            placeholder="Employee code"
-            value={code}
-            onChange={e => setCode(e.target.value)}
-            className="border p-2 rounded"
-          />
+  <TextField
+    size="small"
+    type="date"
+    label="To"
+    value={toDate}
+    onChange={e => setToDate(e.target.value)}
+    InputLabelProps={{ shrink: true }}
+  />
 
-          <select
-            value={department}
-            onChange={e => setDepartment(e.target.value)}
-            className="border p-2 rounded"
-          >
-            {departments.map(d => (
-              <option key={d} value={d}>
-                {d === 'ALL' ? 'All Departments' : d}
-              </option>
-            ))}
-          </select>
+  <Box
+    sx={{
+      gridColumn: '1 / -1',
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: 1,
+      mt: 0.5,
+    }}
+  >
+    <Button size="small" variant="outlined" color="error" onClick={clearFilters}>
+      Clear
+    </Button>
+    <Button size="small" variant="contained" onClick={applyFilters}>
+      Apply Filter
+    </Button>
+  </Box>
+</Box>
 
-          <select
-            value={designation}
-            onChange={e => setDesignation(e.target.value)}
-            className="border p-2 rounded"
-          >
-            {designations.map(d => (
-              <option key={d} value={d}>
-                {d === 'ALL' ? 'All Designations' : d}
-              </option>
-            ))}
-          </select>
 
-          <button
-          onClick={() => {
-            setFromDate(today)
-            setToDate(today)
-            setName('')
-            setCode('')
-            setDepartment('ALL')
-            setDesignation('ALL')
+      {/* GRID */}
+      <Box
+        sx={{
+          height: { xs: 420, md: 520 },
+          width: '100%',
+          '& .MuiDataGrid-columnHeaders': {
+            minHeight: 40,
+            maxHeight: 40,
+            fontWeight:"bold", fontSize: 15,
+            background:"black"
+          },
+          '& .MuiDataGrid-cell': {
+            py: 0.5,
+            fontSize: 14
+          }
+        }}
+      >
+        <DataGrid
+          rows={gridRows}
+          columns={columns}
+          rowCount={total}
+          pageSizeOptions={[PAGE_SIZE]}
+          paginationModel={{ page: page - 1, pageSize: PAGE_SIZE }}
+          onPaginationModelChange={m => {
+            setPage(m.page + 1)
+            loadAttendance(m.page + 1)
           }}
-          className="border p-2 rounded bg-red-500 text-white"
-        >
-          Clear Filters
-        </button>
+          paginationMode="server"
+          density="compact"
+          disableRowSelectionOnClick
+        />
 
-        </div>
-      </div>
-
-      <p className="text-sm text-gray-500 mb-2">
-        Showing attendance for: {fromDate} {fromDate !== toDate && `→ ${toDate}`}
-      </p>
-
-
-      {/* 📜 Table */}
-      <div className="flex-1 overflow-auto border rounded-xl bg-white">
-        <table className="min-w-[900px] w-full">
-          <thead className="bg-gray-100 sticky top-0">
-            <tr>
-              <th className="p-2 text-left">Name</th>
-              <th className="text-center">Code</th>
-              <th className="text-center">Dept</th>
-              <th className="text-center">Designation</th>
-              <th className="text-center">Type</th>
-              <th className="text-center">Time</th>
-              <th className="text-center">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="p-6 text-center text-red-500">
-                  No records found
-                </td>
-              </tr>
-            ) : (
-              rows.map(r => (
-                <tr key={r.id} className="border-t">
-                  <td className="p-2">{r.employees?.name ?? '-'}</td>
-                  <td className="text-center">{r.employees?.employee_code ?? '-'}</td>
-                  <td className="text-center">{r.employees?.department ?? '-'}</td>
-                  <td className="text-center">{r.employees?.designation ?? '-'}</td>
-                  <td className="text-center">{r.punch_type}</td>
-                  <td className="text-center">{new Date(r.punch_time).toLocaleString()}</td>
-                  <td className="space-x-2 text-center">
-                    <button
-                      onClick={() => openPhoto(r.photo_path)}
-                      className="px-2 py-1 bg-blue-600 text-white rounded"
-                    >
-                      Photo
-                    </button>
-                    <button
-                      onClick={() => openMap(r.latitude, r.longitude)}
-                      className="px-2 py-1 bg-green-600 text-white rounded"
-                    >
-                      Map
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 🔢 Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(p => p - 1)}
-          className="px-4 py-2 border rounded disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        <span className="text-sm">
-          Page {page} of {totalPages}
-        </span>
-
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage(p => p + 1)}
-          className="px-4 py-2 border rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      </Box>
     </div>
+  )
+}
+
+/* ---------------- MULTI SELECT ---------------- */
+
+function MultiSelect({
+  label,
+  options,
+  value,
+  onChange,
+  disabled,
+  size = 'small'
+}: any) {
+  return (
+    <FormControl fullWidth size={size} disabled={disabled}>
+      <InputLabel size={size}>{label}</InputLabel>
+      <Select
+        multiple
+        size={size}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        input={<OutlinedInput label={label} />}
+        renderValue={(selected: any[]) => `${selected.length} selected`}
+        MenuProps={{
+          PaperProps: {
+            sx: { maxHeight: 240 }
+          }
+        }}
+      >
+        {options.map((opt: any) => {
+          const val = opt.value ?? opt
+          const text = opt.label ?? opt
+          return (
+            <MenuItem key={val} value={val} dense>
+              <Checkbox size="small" checked={value.includes(val)} />
+              <ListItemText
+                primary={text}
+                primaryTypographyProps={{ fontSize: 13 }}
+              />
+            </MenuItem>
+          )
+        })}
+      </Select>
+    </FormControl>
   )
 }
