@@ -32,8 +32,9 @@ type AttendanceRow = {
     employee_code: string | null
     department: string | null
     designation: string | null
-  } | null
+  }[] | null
 }
+
 
 type EmployeeOption = {
   id: number
@@ -254,22 +255,24 @@ useEffect(() => {
   /* -------- GRID DATA -------- */
 
   const gridRows = rows.map(r => {
-    const key = `${r.latitude},${r.longitude}`
+  const emp = r.employees?.[0]
+  const key = `${r.latitude},${r.longitude}`
 
-    return {
-      id: r.id,
-      name: r.employees?.name ?? '-',
-      code: r.employees?.employee_code ?? '-',
-      department: r.employees?.department ?? '-',
-      designation: r.employees?.designation ?? '-',
-      type: r.punch_type,
-      time: dayjs(r.punch_time).format('DD MMM YYYY, hh:mm A'),
-      location: locationCache[key] ?? '-',
-      photo: r.photo_path,
-      lat: r.latitude,
-      lng: r.longitude
-    }
-  })
+  return {
+    id: r.id,
+    name: emp?.name ?? '-',
+    code: emp?.employee_code ?? '-',
+    department: emp?.department ?? '-',
+    designation: emp?.designation ?? '-',
+    type: r.punch_type,
+    time: dayjs(r.punch_time).format('DD MMM YYYY, hh:mm A'),
+    location: locationCache[key] ?? '-',
+    photo: r.photo_path,
+    lat: r.latitude,
+    lng: r.longitude
+  }
+})
+
 
 
   const columns: GridColDef[] = [
