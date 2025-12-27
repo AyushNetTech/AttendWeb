@@ -21,14 +21,17 @@ type AttendanceRow = {
 const PAGE_SIZE = 10
 const DEBOUNCE_MS = 400
 
+const today = new Date().toISOString().slice(0, 10)
+
+
 export default function Attendance() {
   const [rows, setRows] = useState<AttendanceRow[]>([])
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
 
   // 🔎 Filters
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [fromDate, setFromDate] = useState(today)
+  const [toDate, setToDate] = useState(today)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [department, setDepartment] = useState('ALL')
@@ -37,10 +40,27 @@ export default function Attendance() {
   const [departments, setDepartments] = useState<string[]>([])
   const [designations, setDesignations] = useState<string[]>([])
 
+  async function loadFilters() {
+    const { data } = await supabase
+      .from('employees')
+      .select('department, designation')
+
+    if (data) {
+      setDepartments([
+        'ALL',
+        ...Array.from(new Set(data.map(e => e.department).filter(Boolean)))
+      ])
+      setDesignations([
+        'ALL',
+        ...Array.from(new Set(data.map(e => e.designation).filter(Boolean)))
+      ])
+    }
+  }
+
   // ⏳ Debounced values
   const [debouncedFilters, setDebouncedFilters] = useState({
-    fromDate,
-    toDate,
+    fromDate : today,
+    toDate : today,
     name,
     code,
     department,
@@ -72,23 +92,6 @@ export default function Attendance() {
   useEffect(() => {
     loadAttendance()
   }, [page, debouncedFilters])
-
-  async function loadFilters() {
-    const { data } = await supabase
-      .from('employees')
-      .select('department, designation')
-
-    if (data) {
-      setDepartments([
-        'ALL',
-        ...Array.from(new Set(data.map(e => e.department).filter(Boolean)))
-      ])
-      setDesignations([
-        'ALL',
-        ...Array.from(new Set(data.map(e => e.designation).filter(Boolean)))
-      ])
-    }
-  }
 
   async function loadAttendance() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -230,8 +233,8 @@ export default function Attendance() {
 
           <button
           onClick={() => {
-            setFromDate('')
-            setToDate('')
+            setFromDate(today)
+            setToDate(today)
             setName('')
             setCode('')
             setDepartment('ALL')
@@ -244,6 +247,11 @@ export default function Attendance() {
 
         </div>
       </div>
+
+      <p className="text-sm text-gray-500 mb-2">
+        Showing attendance for: {fromDate} {fromDate !== toDate && `→ ${toDate}`}
+      </p>
+
 
       {/* 📜 Table */}
       <div className="flex-1 overflow-auto border rounded-xl bg-white">
