@@ -48,8 +48,10 @@ type EmployeeOption = {
   designation: string
 }
 
-const PAGE_SIZE = 10
+const PAGE_SIZE = 15
 const today = dayjs().format('YYYY-MM-DD')
+
+
 
 type LocationCache = {
   [key: string]: string
@@ -63,6 +65,7 @@ export default function Attendance() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [locationCache, setLocationCache] = useState<LocationCache>({})
+  const [loading, setLoading] = useState(false)
 
 
   /* -------- FILTER STATE -------- */
@@ -154,6 +157,10 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
   /* -------- LOAD ATTENDANCE -------- */
 
   async function loadAttendance(p = page) {
+
+    setLoading(true)
+
+    try{
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
@@ -207,6 +214,9 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
     setRows(Array.isArray(data) ? data : [])
     setTotal(count ?? 0)
+    } finally{
+      setLoading(false)
+    }
   }
 
   /* -------- ACTION HELPERS -------- */
@@ -407,11 +417,11 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
         {/* BUTTONS */}
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', height:"100%"}}>
-          <Button size="small" variant="outlined" color="error" onClick={clearFilters} style={{backgroundColor:"#FF5C5C", color:"white"}}>
+          <Button size="small" variant="outlined" color="error" disabled={loading} onClick={clearFilters} style={{backgroundColor:"#FF5C5C", color:"white"}}>
             Clear
           </Button>
-          <Button size="small" variant="contained" onClick={applyFilters} style={{flex:1}}>
-            Apply
+          <Button size="small" variant="contained" disabled={loading} onClick={applyFilters} style={{flex:1}}>
+            {loading ? 'Applying…' : 'Apply'}
           </Button>
         </Box>
       </Box>
@@ -446,6 +456,7 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
       <DataGrid
         rows={gridRows}
         columns={columns}
+        loading={loading}
         rowCount={total}
         pageSizeOptions={[PAGE_SIZE]}
         paginationModel={{ page: page - 1, pageSize: PAGE_SIZE }}
