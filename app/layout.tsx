@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import './globals.css'
 
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
 export const metadata: Metadata = {
   applicationName: 'AttendOn',
   title: {
@@ -63,6 +66,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>{children}</body>
+      <ToastContainer
+        position='top-right'
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme='dark'
+      />
     </html>
   )
 }
