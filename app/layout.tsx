@@ -65,8 +65,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
-      <ToastContainer
+      <body>
+        {children}
+        <ToastContainer
         position='top-right'
         autoClose={3000}
         hideProgressBar={false}
@@ -74,8 +75,10 @@ export default function RootLayout({
         closeOnClick
         pauseOnHover
         draggable
-        theme='dark'
+        theme="colored"
+        toastClassName="rounded-xl shadow-lg"
       />
+      </body>
     </html>
   )
 }
