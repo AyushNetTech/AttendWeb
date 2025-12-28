@@ -75,6 +75,7 @@ export default function RootLayout({
         closeOnClick
         pauseOnHover
         draggable
+        limit={3}
         theme="colored"
         toastClassName="rounded-xl shadow-lg"
       />

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import { notifySuccess } from '@/lib/notify'
+import { notifyError, notifySuccess } from '@/lib/notify'
 
 export default function AuthPage() {
   const [isSignup, setIsSignup] = useState(false)
@@ -13,33 +13,73 @@ export default function AuthPage() {
   const router = useRouter()
 
   const handleAuth = async () => {
-  if (isSignup) {
-    await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${location.origin}/auth` }
-    })
-    notifySuccess('Verify email and login')
-    setIsSignup(false)
-  } else {
+  if (!email || !password) {
+    notifyError('Email and password are required')
+    return
+  }
+
+  try {
+    if (isSignup) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${location.origin}/auth`
+        }
+      })
+
+      if (error) {
+        notifyError(error.message)
+        return
+      }
+
+      notifySuccess('Verify your email before logging in')
+      setIsSignup(false)
+      return
+    }
+
+    // 🔹 LOGIN
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     })
 
-    if (error) return
+    if (error) {
+      // 🔥 EMAIL NOT VERIFIED
+      if (
+        error.message.toLowerCase().includes('email') &&
+        error.message.toLowerCase().includes('confirm')
+      ) {
+        notifyError('Please verify your email before logging in')
+      } else {
+        notifyError(error.message)
+      }
+      return
+    }
 
+    // 🔹 Get logged-in user
     const { data: authData } = await supabase.auth.getUser()
+    if (!authData.user) {
+      notifyError('Authentication failed')
+      return
+    }
 
+    // 🔹 Check company
     const { data: company } = await supabase
       .from('companies')
       .select('id')
-      .eq('owner_id', authData!.user!.id)
+      .eq('owner_id', authData.user.id)
       .maybeSingle()
 
+    notifySuccess('Login successful')
+
     router.replace(company ? '/dashboard' : '/company/setup')
+
+  } catch (err) {
+    notifyError('Something went wrong. Try again.')
   }
 }
+
 
 
   return (
