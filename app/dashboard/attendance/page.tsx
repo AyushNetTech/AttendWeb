@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { useTheme, useMediaQuery } from '@mui/material'
+import PhotoCameraOutlinedIcon from '@mui/icons-material/CameraAltTwoTone'
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnTwoTone'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
 
 
 import {
@@ -340,28 +344,33 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
       {
         field: 'actions',
         headerName: 'Actions',
-        minWidth: 150,
+        minWidth: 120,
         sortable: false,
         renderCell: params => (
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={() => openPhoto(params.row.photo)}
-            >
-              Photo
-            </Button>
-            <Button
-              size="small"
-              color="success"
-              variant="contained"
-              onClick={() => openMap(params.row.lat, params.row.lng)}
-            >
-              Map
-            </Button>
+            <Tooltip title="View Photo">
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => openPhoto(params.row.photo)}
+              >
+                <PhotoCameraOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="View Location">
+              <IconButton
+                size="small"
+                color="success"
+                onClick={() => openMap(params.row.lat, params.row.lng)}
+              >
+                <LocationOnOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         )
       }
+
     ]
 
 
