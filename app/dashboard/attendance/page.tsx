@@ -48,7 +48,7 @@ type EmployeeOption = {
   designation: string
 }
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 10
 const today = dayjs().format('YYYY-MM-DD')
 
 type LocationCache = {
@@ -332,14 +332,14 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
   /* -------- UI -------- */
 
   return (
-    <div className="p-6">
+    <div className="p-6 h-[calc(100vh_-_120px)]">
       <h1 className="text-2xl font-bold mb-3">Attendance</h1>
-
+      <div className="h-full">
       {/* FILTER PANEL */}
       <Box
         sx={{
           backgroundColor: '#fff',
-          border: '1px solid #c9c9c9ff',
+          border: '1px solid #e5e7eb',
           borderRadius: 2,
           p: 2,
           mb: 2,
@@ -416,15 +416,12 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
         </Box>
       </Box>
 
-
-
       {/* GRID */}
       <Box
         sx={{
-          height: isTablet ? 300 : 400, // ⬅ more space
+          height: "100%",
           width: '100%',
           overflowX: 'auto',
-
           '& .MuiDataGrid-footerContainer': {
             minHeight: 52 // ⬅ force pagination visible
           },
@@ -433,9 +430,8 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
             minHeight: 40,
             maxHeight: 40,
             fontSize: isTablet ? 12 : 14,
-            fontWeight: "bold",
+            fontWeight: 600,
             backgroundColor: '#000000ff'
-
           },
 
           '& .MuiDataGrid-cell': {
@@ -467,6 +463,7 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
 
       </Box>
+      </div>
     </div>
   )
 }
