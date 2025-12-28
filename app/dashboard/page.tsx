@@ -179,7 +179,10 @@ setWeekly(
                 dataKey="value"
                 innerRadius={60}
                 outerRadius={90}
-                label={({ percent }) => `${Math.round(percent * 100)}%`}
+                label={({ percent }) =>
+                  percent !== undefined ? `${Math.round(percent * 100)}%` : ''
+                }
+
               >
                 {pieData.map((_, i) => (
                   <Cell key={i} fill={PIE_COLORS[i]} />
