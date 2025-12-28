@@ -146,17 +146,45 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
   /* -------- CLEAR FILTERS -------- */
 
   function clearFilters() {
+    const defaultFrom = today
+    const defaultTo = today
+
     setSelectedDepartments([])
     setSelectedDesignations([])
     setSelectedEmployees([])
-    setFromDate(today)
-    setToDate(today)
-    loadAttendance(1)
+    setFromDate(defaultFrom)
+    setToDate(defaultTo)
+    setPage(1)
+
+    loadAttendance(1, {
+      departments: [],
+      designations: [],
+      employees: [],
+      fromDate: defaultFrom,
+      toDate: defaultTo
+    })
   }
+
 
   /* -------- LOAD ATTENDANCE -------- */
 
-  async function loadAttendance(p = page) {
+  async function loadAttendance(
+      p = page,
+      filters?: {
+        departments?: string[]
+        designations?: string[]
+        employees?: number[]
+        fromDate?: string
+        toDate?: string
+      }
+    ) {
+
+      const fDepartments = filters?.departments ?? selectedDepartments
+      const fDesignations = filters?.designations ?? selectedDesignations
+      const fEmployees = filters?.employees ?? selectedEmployees
+      const fFromDate = filters?.fromDate ?? fromDate
+      const fToDate = filters?.toDate ?? toDate
+
 
     setLoading(true)
 
@@ -193,17 +221,17 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
         { count: 'exact' }
       )
       .eq('company_id', company.id)
-      .gte('punch_time', `${fromDate}T00:00:00`)
-      .lte('punch_time', `${toDate}T23:59:59`)
+      .gte('punch_time', `${fFromDate}T00:00:00`)
+      .lte('punch_time', `${fToDate}T23:59:59`)
 
-    if (selectedDepartments.length)
-      query = query.in('employees.department', selectedDepartments)
+    if (fDepartments.length)
+    query = query.in('employees.department', fDepartments)
 
-    if (selectedDesignations.length)
-      query = query.in('employees.designation', selectedDesignations)
+    if (fDesignations.length)
+      query = query.in('employees.designation', fDesignations)
 
-    if (selectedEmployees.length)
-      query = query.in('employees.id', selectedEmployees)
+    if (fEmployees.length)
+      query = query.in('employees.id', fEmployees)
 
     const from = (p - 1) * PAGE_SIZE
     const to = from + PAGE_SIZE - 1
