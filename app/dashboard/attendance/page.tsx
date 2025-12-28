@@ -388,8 +388,8 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
           backgroundColor: '#fff',
           border: '1px solid #e5e7eb',
           borderRadius: 2,
-          p: 2,
-          mb: 2,
+          p: 1.5,
+          mb: 1.5,
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
@@ -406,6 +406,7 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
           value={selectedDepartments}
           onChange={setSelectedDepartments}
           size="small"
+          
         />
 
         <MultiSelect
@@ -476,6 +477,7 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
           '& .MuiDataGrid-columnHeaders': {
             minHeight: 40,
             maxHeight: 40,
+            fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: isTablet ? 12 : 14,
             fontWeight: 600,
             backgroundColor: '#000000ff'
