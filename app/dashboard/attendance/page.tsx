@@ -480,7 +480,7 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
             fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
             fontSize: isTablet ? 12 : 14.5,
             fontWeight: 600,
-            backgroundColor: '#000000ff'
+            borderBottom: '1px solid #000000ff',
           },
 
           '& .MuiDataGrid-cell': {
