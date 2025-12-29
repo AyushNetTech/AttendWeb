@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Sidebar from '@/components/Sidebar'
-import { Menu } from 'lucide-react'
+import { Link, Menu } from 'lucide-react'
 
 export default function DashboardLayout({
   children
@@ -21,7 +21,9 @@ export default function DashboardLayout({
           <button onClick={() => setOpen(true)}>
             <Menu />
           </button>
-          <span className="font-semibold">Dashboard</span>
+          <span className="text-xl font-bold">
+          Attend<span className="text-blue-600">On</span>
+        </span>
         </div>
 
         {/* Page content */}
