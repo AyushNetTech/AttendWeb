@@ -17,13 +17,13 @@ export default function EmployeesPage() {
   department: string
 }
 
-const [employees, setEmployees] = useState<Employee[]>([])
+const [employees, setEmployees] = useState<any[]>([])
+const [loading, setLoading] = useState(true)
 
-  const [loading, setLoading] = useState(true)
+const [selectedDepartments, setSelectedDepartments] = useState<string[]>([])
+const [selectedDesignations, setSelectedDesignations] = useState<string[]>([])
+const [search, setSearch] = useState('')
 
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([])
-  const [selectedDesignations, setSelectedDesignations] = useState<string[]>([])
-  const [search, setSearch] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
   const shouldShowEmployees =
@@ -57,27 +57,22 @@ const [employees, setEmployees] = useState<Employee[]>([])
   }
 
   const departments = useMemo<string[]>(
-  () =>
-    Array.from(
-      new Set(employees.map(e => e.department).filter(Boolean))
-    ),
+  () => Array.from(new Set(employees.map(e => e.department).filter(Boolean))),
   [employees]
 )
 
-const designations = useMemo<string[]>(
-  () => {
-    if (!selectedDepartments.length) return []
-    return Array.from(
-      new Set(
-        employees
-          .filter(e => selectedDepartments.includes(e.department))
-          .map(e => e.designation)
-          .filter(Boolean)
-      )
+const designations = useMemo<string[]>(() => {
+  if (!selectedDepartments.length) return []
+  return Array.from(
+    new Set(
+      employees
+        .filter(e => selectedDepartments.includes(e.department))
+        .map(e => e.designation)
+        .filter(Boolean)
     )
-  },
-  [employees, selectedDepartments]
-)
+  )
+}, [employees, selectedDepartments])
+
 
 
   const filteredEmployees = useMemo(() => {
@@ -196,9 +191,9 @@ function Filters({
                 size="small"
                 checked={selectedDepartments.includes(dep)}
                 onChange={() =>
-                  setSelectedDepartments(prev =>
+                  setSelectedDepartments((prev: string[]) =>
                     prev.includes(dep)
-                      ? prev.filter(d => d !== dep)
+                      ? prev.filter((d: string) => d !== dep)
                       : [...prev, dep]
                   )
                 }
@@ -208,6 +203,7 @@ function Filters({
           />
         ))}
 
+
       </FormGroup>
 
       {selectedDepartments.length > 0 && (
@@ -215,24 +211,25 @@ function Filters({
           <p className="text-sm font-medium mt-3 mb-1">Designation</p>
           <FormGroup>
             {designations.map((des: string) => (
-              <FormControlLabel
-                key={des}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={selectedDesignations.includes(des)}
-                    onChange={() =>
-                      setSelectedDesignations(prev =>
-                        prev.includes(des)
-                          ? prev.filter(d => d !== des)
-                          : [...prev, des]
-                      )
-                    }
-                  />
-                }
-                label={<span className="text-sm">{des}</span>}
-              />
-            ))}
+            <FormControlLabel
+              key={des}
+              control={
+                <Checkbox
+                  size="small"
+                  checked={selectedDesignations.includes(des)}
+                  onChange={() =>
+                    setSelectedDesignations((prev: string[]) =>
+                      prev.includes(des)
+                        ? prev.filter((d: string) => d !== des)
+                        : [...prev, des]
+                    )
+                  }
+                />
+              }
+              label={<span className="text-sm">{des}</span>}
+            />
+          ))}
+
 
           </FormGroup>
         </>
