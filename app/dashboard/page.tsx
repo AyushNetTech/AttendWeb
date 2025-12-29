@@ -205,7 +205,12 @@ setWeekly(
         <ChartCard title="Weekly Attendance Trend">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={weekly} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
-              <XAxis dataKey="day" />
+              <XAxis dataKey="day" 
+                angle={-20}
+                textAnchor="end"
+                height={30}
+                tick={{ fontSize: 12 }}
+              />
               <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} />
               <Tooltip
                 formatter={(v, _, p) => [`${p.payload.count}`, 'Present']}
