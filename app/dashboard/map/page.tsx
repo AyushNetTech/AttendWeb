@@ -160,12 +160,13 @@ export default function EmployeeMap() {
 
 
   return (
-    <div className="p-6 h-[calc(100vh_-_70px)]">
+    <div className="p-6 h-[calc(100vh_-_200px)] lg:h-[calc(100vh_-_70px)] ">
       <h1 className="text-2xl font-semibold mb-4">
         Employee Attendance Map
       </h1>
 
       <div className="h-full rounded-xl overflow-hidden border">
+
         <MapContainer className="h-full w-full">
           <TileLayer
             attribution="© OpenStreetMap"

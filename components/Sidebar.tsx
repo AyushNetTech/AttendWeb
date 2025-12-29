@@ -67,14 +67,14 @@ export default function Sidebar({ open, onClose }: Props) {
       {/* Mobile overlay */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-10000 lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
         className={`
-          fixed lg:static z-50
+          fixed lg:static z-10000
           w-64 h-screen
           bg-slate-900 text-white p-4 flex flex-col
           transition-transform duration-300
