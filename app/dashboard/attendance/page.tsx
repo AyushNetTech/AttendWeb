@@ -8,6 +8,9 @@ import PhotoCameraOutlinedIcon from '@mui/icons-material/CameraAltTwoTone'
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnTwoTone'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
+import FilterListIcon from '@mui/icons-material/FilterList'
+import Drawer from '@mui/material/Drawer'
+
 
 
 import {
@@ -70,6 +73,7 @@ export default function Attendance() {
   const [total, setTotal] = useState(0)
   const [locationCache, setLocationCache] = useState<LocationCache>({})
   const [loading, setLoading] = useState(false)
+const [showFilters, setShowFilters] = useState(false)
 
 
   /* -------- FILTER STATE -------- */
@@ -86,6 +90,7 @@ export default function Attendance() {
   const [toDate, setToDate] = useState(today)
 
   const theme = useTheme()
+const isMobileView = useMediaQuery(theme.breakpoints.down('sm'))
 const isMobile = useMediaQuery(theme.breakpoints.down('xs'))
 const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
@@ -373,16 +378,7 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
     ]
 
-
-
-
-  /* -------- UI -------- */
-
-  return (
-    <div className="p-3 sm:p-6 h-[calc(100vh_-_120px)] w-screen md:w-screen sm:w-screen lg:w-full">
-      <h1 className="text-2xl font-bold mb-3">Attendance</h1>
-      <div className="h-full mr-2 lg:mr-0">
-      {/* FILTER PANEL */}
+    const FiltersContent = (
       <Box
         sx={{
           backgroundColor: '#fff',
@@ -455,14 +451,79 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
         {/* BUTTONS */}
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', height:"100%"}}>
-          <Button size="small" variant="outlined" color="error" disabled={loading} onClick={clearFilters} style={{backgroundColor:"#FF5C5C", color:"white"}}>
+          <Button size="small" variant="outlined" color="error" disabled={loading} onClick={clearFilters} style={{border:"2px solid #FF5C5C", color:"#FF5C5C", flex:1, fontWeight:"bold", fontFamily:"inherit"}}>
             Clear
           </Button>
-          <Button size="small" variant="contained" disabled={loading} onClick={applyFilters} style={{flex:1}}>
+          <Button
+            size="small"
+            variant="contained"
+            disabled={loading}
+            onClick={() => {
+              applyFilters()
+              if (isMobileView) setShowFilters(false)
+            }}
+            style={{flex:1}}
+          >
             {loading ? 'Applying…' : 'Apply'}
           </Button>
         </Box>
       </Box>
+      )
+
+
+
+
+
+  /* -------- UI -------- */
+
+  return (
+    <div className="p-3 sm:p-6 h-[calc(100vh_-_120px)] w-screen md:w-screen sm:w-screen lg:w-full">
+      <div className="flex items-center justify-between mb-3">
+          <h1 className="text-2xl font-bold">Attendance</h1>
+
+          {isMobileView && (
+            <IconButton
+              color="primary"
+              onClick={() => setShowFilters(true)}
+            >
+              <FilterListIcon />
+            </IconButton>
+          )}
+        </div>
+
+      <div className="h-full mr-2 lg:mr-0">
+      {/* FILTER PANEL */}
+      
+      {/* DESKTOP / TABLET */}
+        {!isMobileView && (
+          <Box mb={1.5}>
+            {FiltersContent}
+          </Box>
+        )}
+
+        {/* MOBILE DRAWER */}
+        <Drawer
+          anchor="right"
+          open={showFilters}
+          onClose={() => setShowFilters(false)}
+          PaperProps={{
+            sx: {
+              width: '100%',
+              maxWidth: 360,
+              p: 2
+            }
+          }}
+        >
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+            <h2 className="text-lg font-semibold">Filters</h2>
+            <Button size="small" onClick={() => setShowFilters(false)}>
+              Close
+            </Button>
+          </Box>
+
+          {FiltersContent}
+        </Drawer>
+
 
       {/* GRID */}
       <Box
