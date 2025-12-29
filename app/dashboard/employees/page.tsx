@@ -9,7 +9,16 @@ import { Plus, Filter } from 'lucide-react'
 export default function EmployeesPage() {
   const router = useRouter()
 
-  const [employees, setEmployees] = useState<any[]>([])
+  type Employee = {
+  id: string
+  name: string
+  employee_code: string
+  designation: string
+  department: string
+}
+
+const [employees, setEmployees] = useState<Employee[]>([])
+
   const [loading, setLoading] = useState(true)
 
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([])
@@ -47,12 +56,16 @@ export default function EmployeesPage() {
     setLoading(false)
   }
 
-  const departments = useMemo(
-    () => Array.from(new Set(employees.map(e => e.department).filter(Boolean))),
-    [employees]
-  )
+  const departments = useMemo<string[]>(
+  () =>
+    Array.from(
+      new Set(employees.map(e => e.department).filter(Boolean))
+    ),
+  [employees]
+)
 
-  const designations = useMemo(() => {
+const designations = useMemo<string[]>(
+  () => {
     if (!selectedDepartments.length) return []
     return Array.from(
       new Set(
@@ -62,7 +75,10 @@ export default function EmployeesPage() {
           .filter(Boolean)
       )
     )
-  }, [employees, selectedDepartments])
+  },
+  [employees, selectedDepartments]
+)
+
 
   const filteredEmployees = useMemo(() => {
     return employees.filter(e => {
@@ -172,7 +188,7 @@ function Filters({
 
       <p className="text-sm font-medium mb-1">Department</p>
       <FormGroup>
-        {departments.map(dep => (
+        {departments.map((dep: string) => (
           <FormControlLabel
             key={dep}
             control={
@@ -180,8 +196,10 @@ function Filters({
                 size="small"
                 checked={selectedDepartments.includes(dep)}
                 onChange={() =>
-                  setSelectedDepartments((p: string[]) =>
-                    p.includes(dep) ? p.filter(d => d !== dep) : [...p, dep]
+                  setSelectedDepartments(prev =>
+                    prev.includes(dep)
+                      ? prev.filter(d => d !== dep)
+                      : [...prev, dep]
                   )
                 }
               />
@@ -189,13 +207,14 @@ function Filters({
             label={<span className="text-sm">{dep}</span>}
           />
         ))}
+
       </FormGroup>
 
       {selectedDepartments.length > 0 && (
         <>
           <p className="text-sm font-medium mt-3 mb-1">Designation</p>
           <FormGroup>
-            {designations.map(des => (
+            {designations.map((des: string) => (
               <FormControlLabel
                 key={des}
                 control={
@@ -203,8 +222,10 @@ function Filters({
                     size="small"
                     checked={selectedDesignations.includes(des)}
                     onChange={() =>
-                      setSelectedDesignations((p: string[]) =>
-                        p.includes(des) ? p.filter(d => d !== des) : [...p, des]
+                      setSelectedDesignations(prev =>
+                        prev.includes(des)
+                          ? prev.filter(d => d !== des)
+                          : [...prev, des]
                       )
                     }
                   />
@@ -212,6 +233,7 @@ function Filters({
                 label={<span className="text-sm">{des}</span>}
               />
             ))}
+
           </FormGroup>
         </>
       )}
