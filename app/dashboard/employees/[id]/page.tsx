@@ -74,104 +74,68 @@ export default function EditEmployee() {
   if (!form) return null
 
   return (
-    <div className="max-w-2xl mx-auto px-2 m-4">
-      {/* Header */}
-      <div className="flex items-center gap-6 mb-5">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </button>
+    <div className="max-w-2xl mx-auto px-3 py-4">
+  {/* Header */}
+  <div className="flex items-center gap-4 mb-5">
+    <button
+      onClick={() => router.back()}
+      className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
+    >
+      <ArrowLeft size={16} /> Back
+    </button>
 
-        <h1 className="text-2xl font-semibold text-gray-900">
-          Edit Employee
-        </h1>
-      </div>
+    <h1 className="text-xl sm:text-2xl font-semibold">Edit Employee</h1>
+  </div>
 
-      {/* Card */}
-      <div className="bg-white rounded-2xl border shadow-sm p-5">
-        <div className="grid gap-3">
-          {/* Name */}
-          <Field
-            label="Employee Name"
-            value={form.name}
-            onChange={(v) => setForm({ ...form, name: v })}
+  <div className="bg-white rounded-2xl border shadow-sm p-5">
+    <div className="grid gap-4">
+      <Field label="Employee Name" value={form.name} onChange={v => setForm({ ...form, name: v })} />
+      <Field label="Employee Code" value={form.employee_code} onChange={v => setForm({ ...form, employee_code: v })} />
+
+      {/* Password */}
+      <div>
+        <label className="block text-sm font-medium mb-1">Password</label>
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={form.password || ''}
+            onChange={e => setForm({ ...form, password: e.target.value })}
+            className="w-full h-11 rounded-xl border px-4 pr-11"
           />
-
-          {/* Code */}
-          <Field
-            label="Employee Code"
-            value={form.employee_code}
-            onChange={(v) => setForm({ ...form, employee_code: v })}
-          />
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={form.password || ''}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
-                className="w-full h-11 rounded-xl border border-gray-300 px-4 pr-11 text-sm
-                           focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          {/* Designation */}
-          <Field
-            label="Designation"
-            value={form.designation || ''}
-            onChange={(v) => setForm({ ...form, designation: v })}
-          />
-
-          {/* Department */}
-          <Field
-            label="Department"
-            value={form.department || ''}
-            onChange={(v) => setForm({ ...form, department: v })}
-          />
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between mt-5">
           <button
-            onClick={deleteEmployee}
-            className="text-sm font-medium text-red-600 hover:underline"
+            type="button"
+            onClick={() => setShowPassword(v => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
           >
-            Delete Employee
-          </button>
-
-          <button
-            onClick={updateEmployee}
-            disabled={loading}
-            className={`h-11 px-6 rounded-xl text-sm font-medium text-white transition
-              ${loading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
       </div>
+
+      <Field label="Designation" value={form.designation || ''} onChange={v => setForm({ ...form, designation: v })} />
+      <Field label="Department" value={form.department || ''} onChange={v => setForm({ ...form, department: v })} />
     </div>
+
+    {/* Actions */}
+    <div className="mt-6 flex flex-col sm:flex-row justify-between gap-3">
+      <button
+        onClick={deleteEmployee}
+        className="text-red-600 text-sm font-medium"
+      >
+        Delete Employee
+      </button>
+
+      <button
+        onClick={updateEmployee}
+        disabled={loading}
+        className="h-11 px-6 rounded-xl bg-blue-600 text-white"
+      >
+        {loading ? 'Saving...' : 'Save Changes'}
+      </button>
+    </div>
+  </div>
+</div>
+
   )
 }
 
