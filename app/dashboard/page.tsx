@@ -143,7 +143,8 @@ setWeekly(
   ]
 
   return (
-    <div className="h-screen p-6 bg-gray-50 overflow-hidden">
+    <div className="min-h-screen p-4 sm:p-6 bg-gray-50 overflow-y-auto">
+
       <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
 
       {/* STATS */}
@@ -169,7 +170,14 @@ setWeekly(
       </div>
 
       {/* CHARTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[65vh]">
+      <div className="
+        grid 
+        grid-cols-1 
+        md:grid-cols-2 
+        xl:grid-cols-3 
+        gap-4
+      ">
+
         {/* PIE */}
         <ChartCard title="Today Attendance">
           <ResponsiveContainer width="100%" height="100%">
@@ -177,8 +185,8 @@ setWeekly(
               <Pie
                 data={pieData}
                 dataKey="value"
-                innerRadius={60}
-                outerRadius={90}
+                innerRadius="45%"
+                outerRadius="70%"
                 label={({ percent }) =>
                   percent !== undefined ? `${Math.round(percent * 100)}%` : ''
                 }
@@ -196,7 +204,7 @@ setWeekly(
         {/* WEEKLY */}
         <ChartCard title="Weekly Attendance Trend">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={weekly}>
+            <LineChart data={weekly} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <XAxis dataKey="day" />
               <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} />
               <Tooltip
@@ -219,6 +227,9 @@ setWeekly(
               <XAxis
                 dataKey="name"
                 interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={50}
                 tick={{ fontSize: 10 }}
               />
               <YAxis allowDecimals={false} />
@@ -254,7 +265,15 @@ function StatCard({ title, value, icon, gradient }: any) {
 
 function ChartCard({ title, children }: any) {
   return (
-    <div className="bg-white rounded-2xl shadow p-4 flex flex-col">
+    <div className="
+      bg-white 
+      rounded-2xl 
+      shadow 
+      p-4 
+      flex 
+      flex-col
+      min-h-[260px] sm:min-h-[320px] md:min-h-[360px]
+    ">
       <h2 className="font-semibold mb-2">{title}</h2>
       <div className="flex-1">{children}</div>
     </div>
