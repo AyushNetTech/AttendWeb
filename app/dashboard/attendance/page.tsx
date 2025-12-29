@@ -478,14 +478,14 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
             minHeight: 40,
             maxHeight: 40,
             fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: isTablet ? 12 : 14.5,
+            fontSize: isTablet ? 13.5 : 15.5,
             fontWeight: 600,
             borderBottom: '1px solid #000000ff',
           },
 
           '& .MuiDataGrid-cell': {
             py: 0.4,
-            fontSize: isTablet ? 12 : 13,
+            fontSize: isTablet ? 13 : 14,
             whiteSpace: 'nowrap'
           }
         }}
