@@ -86,7 +86,7 @@ export default function Attendance() {
   const [toDate, setToDate] = useState(today)
 
   const theme = useTheme()
-const isLaptop = useMediaQuery(theme.breakpoints.down('lg')) // <= 1200px
+const isMobile = useMediaQuery(theme.breakpoints.down('xs'))
 const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
 
   /* -------- INITIAL LOAD -------- */
@@ -379,9 +379,9 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
   /* -------- UI -------- */
 
   return (
-    <div className="p-6 h-[calc(100vh_-_120px)]">
+    <div className="p-3 sm:p-6 h-[calc(100vh_-_120px)] w-screen md:w-screen sm:w-screen lg:w-full">
       <h1 className="text-2xl font-bold mb-3">Attendance</h1>
-      <div className="h-full">
+      <div className="h-full mr-2 lg:mr-0">
       {/* FILTER PANEL */}
       <Box
         sx={{
@@ -502,6 +502,9 @@ const isTablet = useMediaQuery(theme.breakpoints.down('md')) // <= 900px
         onPaginationModelChange={m => {
           setPage(m.page + 1)
           loadAttendance(m.page + 1)
+        }}
+        sx={{
+          overflowX: 'auto', 
         }}
         paginationMode="server"
         density="compact"
