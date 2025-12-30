@@ -206,7 +206,7 @@ setWeekly(
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={weekly} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
               <XAxis dataKey="day" 
-                angle={-20}
+                angle={-70}
                 textAnchor="end"
                 height={30}
                 tick={{ fontSize: 12 }}
@@ -232,7 +232,7 @@ setWeekly(
               <XAxis
                 dataKey="name"
                 interval={0}
-                angle={-20}
+                angle={-30}
                 textAnchor="end"
                 height={50}
                 tick={{ fontSize: 10 }}
